@@ -5,6 +5,8 @@ import (
 	"bookget/model/iiif"
 	"bookget/pkg/downloader"
 	"bookget/pkg/gohttp"
+	"bookget/pkg/progressbar"
+	"bookget/pkg/queue"
 	"bookget/pkg/util"
 	"context"
 	"encoding/json"
@@ -16,6 +18,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type IIIF struct {
@@ -196,6 +199,15 @@ func (i *IIIF) doDezoomify(iiifUrls []string) bool {
 	if iiifUrls == nil {
 		return false
 	}
+	
+	// Use sequential processing if page-rate is 1, concurrent if > 1
+	if config.Conf.PageRate <= 1 {
+		return i.doDezoomifySequential(iiifUrls)
+	}
+	return i.doDezoomifyConcurrent(iiifUrls)
+}
+
+func (i *IIIF) doDezoomifySequential(iiifUrls []string) bool {
 	referer := url.QueryEscape(i.dt.Url)
 
 	args := []string{
@@ -226,12 +238,91 @@ func (i *IIIF) doDezoomify(iiifUrls []string) bool {
 	return true
 }
 
+func (i *IIIF) doDezoomifyConcurrent(iiifUrls []string) bool {
+	if iiifUrls == nil {
+		return false
+	}
+	
+	referer := url.QueryEscape(i.dt.Url)
+	args := []string{
+		"-H", "Origin:" + referer,
+		"-H", "Referer:" + referer,
+	}
+	size := len(iiifUrls)
+	
+	// Count valid pages to download
+	validPages := 0
+	for k, uri := range iiifUrls {
+		if uri == "" || !config.PageRange(k, size) {
+			continue
+		}
+		sortId := fmt.Sprintf("%04d", k+1)
+		filename := sortId + config.Conf.FileExt
+		dest := path.Join(i.dt.SavePath, filename)
+		if !FileExist(dest) {
+			validPages++
+		}
+	}
+	
+	if validPages == 0 {
+		return true
+	}
+	
+	// Create page-level progress bar
+	pageBar := progressbar.Default(int64(validPages), "downloading pages")
+	
+	// Create concurrent queue with page-rate limit
+	q := queue.NewConcurrentQueue(config.Conf.PageRate)
+	var wg sync.WaitGroup
+	
+	for k, uri := range iiifUrls {
+		if uri == "" || !config.PageRange(k, size) {
+			continue
+		}
+		
+		sortId := fmt.Sprintf("%04d", k+1)
+		filename := sortId + config.Conf.FileExt
+		dest := path.Join(i.dt.SavePath, filename)
+		
+		if FileExist(dest) {
+			continue
+		}
+		
+		wg.Add(1)
+		// Capture variables for closure
+		pageURL := uri
+		
+		q.Go(func() {
+			defer wg.Done()
+			defer pageBar.Add(1)
+			
+			// Create a separate downloader instance for each goroutine to avoid race conditions
+			iiifDownloader := downloader.NewIIIFDownloader(&config.Conf)
+			iiifDownloader.SetQuiet(true) // Enable quiet mode to suppress individual tile progress bars
+			_ = iiifDownloader.Dezoomify(i.ctx, pageURL, dest, args)
+			// Suppress errors in concurrent mode to keep progress bar clean
+		})
+	}
+	
+	wg.Wait()
+	return true
+}
+
 func (i *IIIF) doNormal(imgUrls []string) bool {
 	if imgUrls == nil {
 		return false
 	}
-	size := len(imgUrls)
 	fmt.Println()
+	
+	// Use sequential processing if page-rate is 1, concurrent if > 1
+	if config.Conf.PageRate <= 1 {
+		return i.doNormalSequential(imgUrls)
+	}
+	return i.doNormalConcurrent(imgUrls)
+}
+
+func (i *IIIF) doNormalSequential(imgUrls []string) bool {
+	size := len(imgUrls)
 	ctx := context.Background()
 	for k, uri := range imgUrls {
 		if uri == "" || !config.PageRange(k, size) {
@@ -248,7 +339,7 @@ func (i *IIIF) doNormal(imgUrls []string) bool {
 		opts := gohttp.Options{
 			DestFile:    dest,
 			Overwrite:   false,
-			Concurrency: 1,
+			Concurrency: config.Conf.Threads,
 			CookieFile:  config.Conf.CookieFile,
 			HeaderFile:  config.Conf.HeaderFile,
 			CookieJar:   i.dt.Jar,
@@ -262,6 +353,83 @@ func (i *IIIF) doNormal(imgUrls []string) bool {
 		}
 		fmt.Println()
 	}
+	return true
+}
+
+func (i *IIIF) doNormalConcurrent(imgUrls []string) bool {
+	if imgUrls == nil {
+		return false
+	}
+	
+	size := len(imgUrls)
+	ctx := context.Background()
+	
+	// Count valid pages to download
+	validPages := 0
+	for k, uri := range imgUrls {
+		if uri == "" || !config.PageRange(k, size) {
+			continue
+		}
+		ext := util.FileExt(uri)
+		sortId := fmt.Sprintf("%04d", k+1)
+		filename := sortId + ext
+		dest := path.Join(i.dt.SavePath, filename)
+		if !FileExist(dest) {
+			validPages++
+		}
+	}
+	
+	if validPages == 0 {
+		return true
+	}
+	
+	// Create page-level progress bar
+	pageBar := progressbar.Default(int64(validPages), "downloading pages")
+	
+	// Create concurrent queue with page-rate limit
+	q := queue.NewConcurrentQueue(config.Conf.PageRate)
+	var wg sync.WaitGroup
+	
+	for k, uri := range imgUrls {
+		if uri == "" || !config.PageRange(k, size) {
+			continue
+		}
+		
+		ext := util.FileExt(uri)
+		sortId := fmt.Sprintf("%04d", k+1)
+		filename := sortId + ext
+		dest := path.Join(i.dt.SavePath, filename)
+		
+		if FileExist(dest) {
+			continue
+		}
+		
+		wg.Add(1)
+		// Capture variables for closure
+		pageURL := uri
+		
+		q.Go(func() {
+			defer wg.Done()
+			defer pageBar.Add(1)
+			
+			opts := gohttp.Options{
+				DestFile:    dest,
+				Overwrite:   false,
+				Concurrency: config.Conf.Threads, // Use threads for file chunks
+				CookieFile:  config.Conf.CookieFile,
+				HeaderFile:  config.Conf.HeaderFile,
+				CookieJar:   i.dt.Jar,
+				Headers: map[string]interface{}{
+					"User-Agent": config.Conf.UserAgent,
+				},
+			}
+			
+			_, _ = gohttp.FastGet(ctx, pageURL, opts)
+			// Suppress errors in concurrent mode to keep progress bar clean
+		})
+	}
+	
+	wg.Wait()
 	return true
 }
 

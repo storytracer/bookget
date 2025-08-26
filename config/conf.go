@@ -34,6 +34,7 @@ type Input struct {
 
 	Threads       int
 	MaxConcurrent int
+	PageRate      int           //IIIF模式下页面并发数
 	Timeout       time.Duration //超时秒数
 	Retries       int           //重试次数
 
@@ -78,6 +79,7 @@ func Init(ctx context.Context) bool {
 
 	pflag.IntVarP(&Conf.Threads, "threads", "n", 1, "每任务最大线程数")
 	pflag.IntVarP(&Conf.MaxConcurrent, "concurrent", "c", 16, "最大并发任务数")
+	pflag.IntVar(&Conf.PageRate, "page-rate", 1, "IIIF模式下页面并发数，默认1（顺序下载）")
 
 	pflag.IntVar(&Conf.Quality, "quality", 80, "JPG品质，默认80")
 	pflag.StringVar(&Conf.FileExt, "ext", ".jpg", "指定文件扩展名[.jpg|.tif|.png]等")

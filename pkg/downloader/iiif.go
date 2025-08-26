@@ -130,6 +130,7 @@ type IIIFDownloader struct {
 	maxRetries    int
 	jpgQuality    int
 	maxConcurrent int
+	quiet         bool // 静默模式，不显示进度条
 
 	cookies []http.Cookie
 	headers http.Header
@@ -237,6 +238,11 @@ func (d *IIIFDownloader) SetDeepZoomTileFormat(format string) error {
 	return nil
 }
 
+// SetQuiet enables or disables quiet mode (no progress bars)
+func (d *IIIFDownloader) SetQuiet(quiet bool) {
+	d.quiet = quiet
+}
+
 func (d *IIIFDownloader) Dezoomify(ctx context.Context, infoURL string, outputPath string, args []string) error {
 	headers, err := d.argsToHeaders(args)
 	if err != nil {
@@ -259,7 +265,9 @@ func (d *IIIFDownloader) Dezoomify(ctx context.Context, infoURL string, outputPa
 		return fmt.Errorf("保存图像失败: %v", err)
 	}
 
-	fmt.Printf("\n图像合并完成，已保存到 %s\n", outputPath)
+	if !d.quiet {
+		fmt.Printf("\n图像合并完成，已保存到 %s\n", outputPath)
+	}
 	return nil
 }
 
@@ -325,7 +333,10 @@ func (d *IIIFDownloader) downloadIIIFv2Tiles(ctx context.Context, info *IIIFInfo
 	rows := int(math.Ceil(float64(info.Height) / float64(effectiveTileSize)))
 
 	finalImg := image.NewRGBA(image.Rect(0, 0, info.Width, info.Height))
-	progressBar := progressbar.Default(int64(cols*rows), "downloading tiles")
+	var progressBar *progressbar.ProgressBar
+	if !d.quiet {
+		progressBar = progressbar.Default(int64(cols*rows), "downloading tiles")
+	}
 
 	sem := make(chan struct{}, d.maxConcurrent)
 	var wg sync.WaitGroup
@@ -381,7 +392,7 @@ func (d *IIIFDownloader) downloadIIIFv2Tiles(ctx context.Context, info *IIIFInfo
 				}
 
 				img, err := d.downloadImageWithRetry(ctx, tileURL, headers, d.maxRetries)
-				if err != nil {
+				if err != nil || img == nil {
 					select {
 					case errChan <- fmt.Errorf("tile(%d,%d)下载失败: %v", x, y, err):
 					default:
@@ -411,7 +422,9 @@ func (d *IIIFDownloader) downloadIIIFv2Tiles(ctx context.Context, info *IIIFInfo
 				}
 				mu.Unlock()
 
-				progressBar.Add(1)
+				if progressBar != nil {
+					progressBar.Add(1)
+				}
 			}(x, y)
 		}
 	}
@@ -447,7 +460,10 @@ func (d *IIIFDownloader) downloadIIIFv3Tiles(ctx context.Context, info *IIIFInfo
 	rows := int(math.Ceil(float64(info.Height) / float64(tileSize.y)))
 
 	finalImg := image.NewRGBA(image.Rect(0, 0, info.Width, info.Height))
-	progressBar := progressbar.Default(int64(cols*rows), "downloading tiles")
+	var progressBar *progressbar.ProgressBar
+	if !d.quiet {
+		progressBar = progressbar.Default(int64(cols*rows), "downloading tiles")
+	}
 
 	sem := make(chan struct{}, d.maxConcurrent)
 	var wg sync.WaitGroup
@@ -498,7 +514,7 @@ func (d *IIIFDownloader) downloadIIIFv3Tiles(ctx context.Context, info *IIIFInfo
 
 				// 下载瓦片图像
 				img, err := d.downloadImageWithRetry(ctx, tileURL, headers, d.maxRetries)
-				if err != nil {
+				if err != nil || img == nil {
 					select {
 					case errChan <- fmt.Errorf("download tile(%d,%d) error: %v", x, y, err):
 					default:
@@ -519,7 +535,9 @@ func (d *IIIFDownloader) downloadIIIFv3Tiles(ctx context.Context, info *IIIFInfo
 				}
 				mu.Unlock()
 
-				progressBar.Add(1)
+				if progressBar != nil {
+					progressBar.Add(1)
+				}
 			}(x, y)
 		}
 	}
@@ -548,7 +566,10 @@ func (d *IIIFDownloader) downloadAndMergeXMLTiles(ctx context.Context, info *III
 	rows := (info.Size.Height + effectiveTileSize - 1) / effectiveTileSize
 
 	finalImg := image.NewRGBA(image.Rect(0, 0, info.Size.Width, info.Size.Height))
-	progressBar := progressbar.Default(int64(cols*rows), "downloading tiles")
+	var progressBar *progressbar.ProgressBar
+	if !d.quiet {
+		progressBar = progressbar.Default(int64(cols*rows), "downloading tiles")
+	}
 
 	sem := make(chan struct{}, d.maxConcurrent)
 	var wg sync.WaitGroup
@@ -590,7 +611,7 @@ func (d *IIIFDownloader) downloadAndMergeXMLTiles(ctx context.Context, info *III
 				}
 
 				img, err := d.downloadImage(ctx, tileURL, headers)
-				if err != nil {
+				if err != nil || img == nil {
 					select {
 					case errChan <- fmt.Errorf("下载拼图(%d,%d)失败: %v", x, y, err):
 					default:
@@ -624,7 +645,9 @@ func (d *IIIFDownloader) downloadAndMergeXMLTiles(ctx context.Context, info *III
 				}
 				mu.Unlock()
 
-				progressBar.Add(1)
+				if progressBar != nil {
+					progressBar.Add(1)
+				}
 			}(x, y)
 		}
 	}
@@ -1096,7 +1119,7 @@ func (d *IIIFDownloader) downloadImageWithRetry(ctx context.Context, url string,
 	var lastErr error
 	for i := 0; i < maxRetries; i++ {
 		img, err := d.downloadImage(ctx, url, headers)
-		if err == nil {
+		if err == nil && img != nil {
 			return img, nil
 		}
 		lastErr = err

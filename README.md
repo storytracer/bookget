@@ -1,3 +1,16 @@
+# bookget - English Fork
+
+> **⚠️ Important Notice:** This is an English-translated fork of the original bookget project. This fork may contain substantive alterations, feature removals, and compatibility changes compared to the original version. Future development may diverge significantly from the upstream project.
+
+## Original Project Attribution
+
+This project is a fork of the original [bookget](https://github.com/deweizhu/bookget) by [deweizhu](https://github.com/deweizhu). All original code, features, and documentation are credited to the original author. This fork exists solely to provide an English version for international users and may be modified for specific use cases.
+
+**Original Repository:** https://github.com/deweizhu/bookget  
+**Original Author:** [deweizhu](https://github.com/deweizhu)
+
+---
+
 # Introduction
 
 bookget is a digital ancient book download tool that supports approximately 50+ digital libraries.

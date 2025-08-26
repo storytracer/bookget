@@ -8,7 +8,6 @@ import (
 	"bookget/pkg/sharedmemory"
 	"bookget/pkg/util"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -47,11 +46,7 @@ func NewLoc() *Loc {
 	dm := downloader.NewDownloadManager(ctx, cancel, config.Conf.MaxConcurrent)
 
 	// 创建自定义 Transport 忽略 SSL 验证
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
+	tr := NewHttpTransport()
 	jar, _ := cookiejar.New(nil)
 	return &Loc{
 		// 初始化字段

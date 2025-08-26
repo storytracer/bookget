@@ -3,6 +3,8 @@ package app
 import (
 	"bookget/config"
 	"bookget/pkg/chttp"
+	"crypto/tls"
+	"net/http"
 )
 
 func BuildRequestHeader() map[string]string {
@@ -19,4 +21,15 @@ func BuildRequestHeader() map[string]string {
 		}
 	}
 	return httpHeaders
+}
+
+// NewHttpTransport creates a new HTTP transport with proxy support
+func NewHttpTransport() *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		DisableKeepAlives: true,
+		Proxy:             http.ProxyFromEnvironment,
+	}
 }

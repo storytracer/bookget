@@ -194,11 +194,15 @@ func (r *Request) parseClient() {
 		DisableKeepAlives: true,
 	}
 
+	// Check for explicit proxy setting first
 	if r.opts.Proxy != "" {
 		proxy, err := url.Parse(r.opts.Proxy)
 		if err == nil {
 			tr.Proxy = http.ProxyURL(proxy)
 		}
+	} else {
+		// If no explicit proxy, check environment variables
+		tr.Proxy = http.ProxyFromEnvironment
 	}
 	r.cli = &http.Client{
 		Timeout:   r.opts.timeout,

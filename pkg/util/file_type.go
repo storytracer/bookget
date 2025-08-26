@@ -64,6 +64,7 @@ func determineContentTypeByRequest(url string) string {
 		Transport: &http.Transport{
 			TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 			DisableKeepAlives: true,
+			Proxy:             http.ProxyFromEnvironment,
 		},
 	}
 

@@ -304,7 +304,11 @@ func (task *DownloadTask) multiThreadDownload(ctx context.Context, dm *DownloadM
 			// 设置Range头
 			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", start, end))
 
-			client := &http.Client{}
+			client := &http.Client{
+				Transport: &http.Transport{
+					Proxy: http.ProxyFromEnvironment,
+				},
+			}
 			resp, err := client.Do(req.WithContext(ctx))
 			if err != nil {
 				errOnce.Do(func() { firstErr = err })
@@ -368,7 +372,11 @@ func (task *DownloadTask) singleThreadDownload(ctx context.Context, dm *Download
 		req.Header.Set("User-Agent", userAgent)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -439,7 +447,11 @@ func (task *DownloadTask) getFileInfo(ctx context.Context) error {
 		req.Header.Set("User-Agent", userAgent)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return err
@@ -518,7 +530,11 @@ func (task *DownloadTask) detectSupportedMethods(ctx context.Context) error {
 		headReq.Header.Set("User-Agent", userAgent)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
 	resp, err := client.Do(headReq.WithContext(ctx))
 
 	if err == nil && resp.StatusCode == http.StatusOK {

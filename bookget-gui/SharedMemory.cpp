@@ -18,10 +18,10 @@ void SharedMemory::ReleaseMutex(){
     ::ReleaseMutex(m_hSharedMemoryMutex);
 };
 
-// 初始化共享内存和互斥锁
+// Initialize shared memory and mutex
 bool SharedMemory::Init()
 {
-    // 创建互斥锁
+    // Create mutex
     m_hSharedMemoryMutex = CreateMutexW(nullptr, FALSE, m_sharedMemoryMutexName);
     if (m_hSharedMemoryMutex == nullptr)
     {
@@ -29,15 +29,15 @@ bool SharedMemory::Init()
         return false;
     }
 
-    // 等待获取互斥锁
-    DWORD waitResult = ::WaitForSingleObject(m_hSharedMemoryMutex, 5000); // 5秒超时
+    // Wait to acquire mutex
+    DWORD waitResult = ::WaitForSingleObject(m_hSharedMemoryMutex, 5000); // 5 second timeout
     if (waitResult != WAIT_OBJECT_0)
     {
         OutputDebugString(L"Failed to acquire shared memory mutex\n");
         return false;
     }
 
-    // 创建共享内存
+    // Create shared memory
     m_hSharedMemory = CreateFileMappingW(
         INVALID_HANDLE_VALUE,
         NULL,
@@ -53,7 +53,7 @@ bool SharedMemory::Init()
         return false;
     }
 
-    // 映射共享内存视图
+    // Map shared memory view
     m_pSharedMemory = MapViewOfFile(
         m_hSharedMemory,
         FILE_MAP_ALL_ACCESS,
@@ -77,7 +77,7 @@ bool SharedMemory::Init()
 
   
 
-    // 释放互斥锁
+    // Release mutex
     ::ReleaseMutex(m_hSharedMemoryMutex);
 
     return true;
@@ -85,26 +85,26 @@ bool SharedMemory::Init()
 
 SharedMemoryDataMini SharedMemory::Read() {
     SharedMemoryDataMini data;
-    ZeroMemory(&data, sizeof(data)); // 初始化结构体
+    ZeroMemory(&data, sizeof(data)); // Initialize structure
 
-    // 获取互斥锁
+    // Acquire mutex
     DWORD waitResult = WaitForSingleObject(m_hSharedMemoryMutex, 5000);
     if (waitResult != WAIT_OBJECT_0) {
         OutputDebugString(L"Failed to acquire mutex for reading shared memory\n");
-        return data; // 返回空数据
+        return data; // Return empty data
     }
 
     if (m_pSharedMemory) {
         SharedMemoryDataMini* sharedData = static_cast<SharedMemoryDataMini*>(m_pSharedMemory);
         
-        // 复制基本标志
+        // Copy basic flags
         data.URLReady = sharedData->URLReady;
         data.HTMLReady = sharedData->HTMLReady;
         data.CookiesReady = sharedData->CookiesReady;
         data.ImageReady = sharedData->ImageReady;
         data.PID = sharedData->PID;
 
-        // 安全复制字符串
+        // Safely copy strings
         wcsncpy_s(data.URL, _countof(data.URL), sharedData->URL, _TRUNCATE);
         //wcsncpy_s(data.HTML, _countof(data.HTML), sharedData->HTML, _TRUNCATE);
         //wcsncpy_s(data.Cookies, _countof(data.Cookies), sharedData->Cookies, _TRUNCATE);
@@ -116,7 +116,7 @@ SharedMemoryDataMini SharedMemory::Read() {
 }
 
 
-// 写入HTML到共享内存
+// Write HTML to shared memory
 void SharedMemory::WriteHtml(const std::wstring& html) {
     if (m_pSharedMemory == nullptr) return;
 
@@ -147,7 +147,7 @@ void SharedMemory::WriteHtml(const std::wstring& html) {
     ::ReleaseMutex(m_hSharedMemoryMutex);
 }
 
-// 写入Cookies到共享内存
+// Write Cookies to shared memory
 void SharedMemory::WriteCookies(const std::wstring& cookies)
 {
     if (m_pSharedMemory == nullptr)
@@ -179,13 +179,13 @@ void SharedMemory::WriteCookies(const std::wstring& cookies)
     ::ReleaseMutex(m_hSharedMemoryMutex);
 }
 
-// 写入IMAGEPATH到共享内存
+// Write IMAGEPATH to shared memory
 void SharedMemory::WriteImagePath(const std::wstring& imagePath)
 {
     if (m_pSharedMemory == nullptr)
         return;
 
-    // 获取互斥锁
+    // Acquire mutex
     DWORD waitResult = WaitForSingleObject(m_hSharedMemoryMutex, 5000);
     if (waitResult != WAIT_OBJECT_0)
     {
@@ -213,33 +213,33 @@ void SharedMemory::WriteImagePath(const std::wstring& imagePath)
     ::ReleaseMutex(m_hSharedMemoryMutex);
 }
 
-// 清理共享内存资源
+// Clean up shared memory resources
 void SharedMemory::Cleanup()
 {
-    // 获取互斥锁
+    // Acquire mutex
     if (m_hSharedMemoryMutex)
     {
         WaitForSingleObject(m_hSharedMemoryMutex, INFINITE);
     }
 
-    // 清理共享内存映射
+    // Clean up shared memory mapping
     if (m_pSharedMemory)
     {
-        // 将整个共享内存区域清零
+        // Zero out entire shared memory area
         ZeroMemory(m_pSharedMemory, m_sharedMemorySize);
 
         UnmapViewOfFile(m_pSharedMemory);
         m_pSharedMemory = nullptr;
     }
     
-    // 关闭共享内存句柄
+    // Close shared memory handle
     if (m_hSharedMemory)
     {
         CloseHandle(m_hSharedMemory);
         m_hSharedMemory = nullptr;
     }
 
-    // 释放互斥锁并关闭句柄
+    // Release mutex and close handle
     if (m_hSharedMemoryMutex)
     {
         ::ReleaseMutex(m_hSharedMemoryMutex);

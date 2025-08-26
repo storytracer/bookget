@@ -6,7 +6,7 @@ type ManifestResponse struct {
 		Canvases []struct {
 			Id   string `json:"@id"`
 			Type string `json:"@type"`
-			//兼容某些不正规的网站竟然用了string类型，见https://digitalarchive.npm.gov.tw/Antique/setJsonU?uid=58102&Dept=U
+			// Compatibility for some non-standard websites that use string type, see https://digitalarchive.npm.gov.tw/Antique/setJsonU?uid=58102&Dept=U
 			//Height int    `json:"height"`
 			Images []struct {
 				Id       string `json:"@id"`
@@ -16,7 +16,7 @@ type ManifestResponse struct {
 					Id     string `json:"@id"`
 					Type   string `json:"@type"`
 					Format string `json:"format"`
-					//兼容digitalarchive.npm.gov.tw
+					// Compatibility for digitalarchive.npm.gov.tw
 					//Height  int    `json:"height"`
 					Service struct {
 						Id string `json:"@id"`

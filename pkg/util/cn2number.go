@@ -2,13 +2,13 @@ package util
 
 import "strings"
 
-// 数字
+// Numbers
 var chnNumChar = [10]string{"零", "一", "二", "三", "四", "五", "六", "七", "八", "九"}
 
-// 权位
+// Weight positions
 var chnUnitSection = [4]string{"", "万", "亿", "万亿"}
 
-// 数字权位
+// Number weight positions
 var chnUnitChar = [4]string{"", "十", "百", "千"}
 
 type chnNameValue struct {
@@ -17,7 +17,7 @@ type chnNameValue struct {
 	secUnit bool
 }
 
-// 权位于结点的关系
+// Weight position to node relationships
 var chnValuePair = []chnNameValue{{"十", 10, false}, {"百", 100, false}, {"千", 1000, false}, {"万", 10000, true}, {"亿", 100000000, true}}
 
 //func main() {
@@ -44,7 +44,7 @@ var chnValuePair = []chnNameValue{{"十", 10, false}, {"百", 100, false}, {"千
 //	}
 //}
 
-// 阿拉伯数字转汉字
+// Convert Arabic numbers to Chinese characters
 func NumberToChinese(num int64) (numStr string) {
 	var unitPos = 0
 	var needZero = false
@@ -61,7 +61,7 @@ func NumberToChinese(num int64) (numStr string) {
 			strIns += chnUnitSection[0]
 		}
 		numStr = strIns + numStr
-		/*千位是 0 需要在下一个 section 补零*/
+		// When thousands digit is 0, need to add zero in next section
 		needZero = (section < 1000) && (section > 0)
 		num = num / 10000
 		unitPos++
@@ -76,26 +76,26 @@ func sectionToChinese(section int64) (chnStr string) {
 		var v = section % 10
 		if v == 0 {
 			if !zero {
-				zero = true /*需要补，zero 的作用是确保对连续的多个，只补一个中文零*/
+				zero = true // Need to add zero, ensures only one Chinese zero for consecutive zeros
 				chnStr = chnNumChar[v] + chnStr
 			}
 		} else {
-			zero = false                   //至少有一个数字不是
-			strIns = chnNumChar[v]         //此位对应的中文数字
-			strIns += chnUnitChar[unitPos] //此位对应的中文权位
+			zero = false                   // At least one digit is not zero
+			strIns = chnNumChar[v]         // Chinese number for this position
+			strIns += chnUnitChar[unitPos] // Chinese weight position for this digit
 			chnStr = strIns + chnStr
 		}
-		unitPos++ //移位
+		unitPos++ // Shift position
 		section = section / 10
 	}
 	return
 }
 
-// 汉字转阿拉伯数字
+// Convert Chinese characters to Arabic numbers
 func ChineseToNumber(chnStr string) (rtnInt int) {
 	var section = 0
 	var number = 0
-	//十一、十二、一百十一、一百十二 这样的单独处理。
+	// Handle special cases like 十一、十二、一百十一、一百十二 separately
 	if len(chnStr) == 6 || strings.Contains(chnStr, "百十") {
 		chnStr = strings.Replace(chnStr, "十", "一十", -1)
 	}

@@ -1,11 +1,11 @@
-# 编译配置
+# Build configuration
 GO ?= go
 GOFLAGS ?= -trimpath
 LDFLAGS ?= -s -w
 TARGET ?= bookget
 DIST_DIR ?= dist
 
-# 构建目标
+# Build targets
 .PHONY: build
 build:
 	@echo "Building $(TARGET) for $(GOOS)-$(GOARCH)"
@@ -13,7 +13,7 @@ build:
 	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" \
 		-o $(DIST_DIR)/$(GOOS)-$(GOARCH)/$(TARGET)$(SUFFIX) ./cmd/
 
-# 跨平台构建（调用示例）
+# Cross-platform build (usage example)
 .PHONY: release
 release: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
@@ -32,7 +32,7 @@ darwin-arm64:
 windows-amd64:
 	@$(MAKE) build GOOS=windows GOARCH=amd64 SUFFIX=.exe
 
-# 清理
+# Clean
 .PHONY: clean
 clean:
 	@rm -rf $(DIST_DIR)

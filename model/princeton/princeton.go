@@ -1,6 +1,6 @@
 package princeton
 
-// Graphql 查manifestUrl
+// Graphql query manifestUrl
 type Graphql struct {
 	Data struct {
 		ResourcesByOrangelightIds []struct {
@@ -17,7 +17,7 @@ type ResponseManifest struct {
 	} `json:"manifests"`
 }
 
-// Manifest 查info.json
+// Manifest query info.json
 type ResponseManifest2 struct {
 	Sequences []struct {
 		Canvases []struct {

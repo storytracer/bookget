@@ -41,7 +41,7 @@ type Info struct {
 	Amount                  interface{} `json:"amount"`
 	OrgName                 string      `json:"orgName"`
 	DocFormat               string      `json:"docFormat"`
-	DocType                 string      `json:"docType"` //ts=图书，qk=期刊，bz=报纸
+	DocType                 string      `json:"docType"` // ts=books, qk=periodicals, bz=newspapers
 	SeriesName              string      `json:"seriesName"`
 	IsResearch              string      `json:"isResearch"`
 	IiifObj                 struct {

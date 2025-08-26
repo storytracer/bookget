@@ -5,15 +5,15 @@ import (
 	"sync"
 )
 
-// ConcurrentQueue 提供带有限制的并发执行队列
+// ConcurrentQueue provides a concurrent execution queue with limits
 type ConcurrentQueue struct {
-	capacity int            // 最大并发数
-	sem      chan struct{}  // 信号量通道，用于控制并发
-	wg       sync.WaitGroup // 等待所有任务完成
+	capacity int            // Maximum concurrency count
+	sem      chan struct{}  // Semaphore channel for controlling concurrency
+	wg       sync.WaitGroup // Wait for all tasks to complete
 }
 
-// NewConcurrentQueue 创建一个新的并发队列
-// capacity: 最大并发数量，必须大于0
+// NewConcurrentQueue creates a new concurrent queue
+// capacity: Maximum concurrency count, must be greater than 0
 func NewConcurrentQueue(capacity int) *ConcurrentQueue {
 	if capacity <= 0 {
 		panic("queue capacity must be greater than 0")
@@ -24,18 +24,18 @@ func NewConcurrentQueue(capacity int) *ConcurrentQueue {
 	}
 }
 
-// Go 提交一个任务到队列中异步执行
-// 如果队列已满，会阻塞直到有可用槽位
+// Go submits a task to the queue for asynchronous execution
+// If the queue is full, it will block until there is an available slot
 func (q *ConcurrentQueue) Go(task func()) {
 	q.wg.Add(1)
 	go func() {
-		q.sem <- struct{}{} // 获取信号量
+		q.sem <- struct{}{} // Acquire semaphore
 		defer func() {
-			<-q.sem // 释放信号量
+			<-q.sem // Release semaphore
 			q.wg.Done()
 		}()
 
-		// 执行任务并处理可能的panic
+		// Execute task and handle potential panic
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("task panic recovered: %v", r)
@@ -46,15 +46,15 @@ func (q *ConcurrentQueue) Go(task func()) {
 	}()
 }
 
-// Wait 等待所有已提交的任务完成
+// Wait waits for all submitted tasks to complete
 func (q *ConcurrentQueue) Wait() {
 	q.wg.Wait()
 }
 
-// TryGo 尝试提交任务，如果队列已满则立即返回false
+// TryGo attempts to submit a task, returns false immediately if the queue is full
 func (q *ConcurrentQueue) TryGo(task func()) bool {
 	select {
-	case q.sem <- struct{}{}: // 尝试获取信号量
+	case q.sem <- struct{}{}: // Try to acquire semaphore
 		q.wg.Add(1)
 		go func() {
 			defer func() {
@@ -72,7 +72,7 @@ func (q *ConcurrentQueue) TryGo(task func()) bool {
 	}
 }
 
-// CurrentCount 返回当前正在执行的任务数量
+// CurrentCount returns the number of tasks currently executing
 func (q *ConcurrentQueue) CurrentCount() int {
 	return len(q.sem)
 }

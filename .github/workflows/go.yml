@@ -48,7 +48,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # 必须添加这个权限
+      contents: write  # Must add this permission
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.RELEASE_TOKEN }}  # 替换默认的GITHUB_TOKEN
+          token: ${{ secrets.RELEASE_TOKEN }}  # Replace default GITHUB_TOKEN
           tag_name: ${{ github.ref_name }}
           name: "bookget ${{ github.ref_name }}"
           body: "|

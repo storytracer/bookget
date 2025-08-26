@@ -45,20 +45,20 @@ func NewChecker(currentVersion, repoOwner, repoName string) *Checker {
 }
 
 func (c *Checker) CheckForUpdate() (string, bool, error) {
-	// 检查是否需要跳过本次检查
+	// Check if this check should be skipped
 	if time.Since(c.LastChecked) < DefaultCheckInterval {
 		return "", false, nil
 	}
 
-	// 获取最新版本
+	// Get latest version
 	latestVersion, err := c.getLatestVersion()
 	if err != nil {
-		return "", false, fmt.Errorf("获取最新版本失败: %w", err)
+		return "", false, fmt.Errorf("failed to get latest version: %w", err)
 	}
 
 	c.LastChecked = time.Now()
 
-	// 比较版本
+	// Compare versions
 	if !c.compareVersions(latestVersion) {
 		return latestVersion, true, nil
 	}
@@ -67,24 +67,24 @@ func (c *Checker) CheckForUpdate() (string, bool, error) {
 }
 
 func (c *Checker) getLatestVersion() (string, error) {
-	// 先尝试从缓存读取
+	// First try to read from cache
 	if cached, err := c.readCache(); err == nil && cached != nil {
 		return cached.Version, nil
 	}
 
-	// 从GitHub API获取最新版本
+	// Get latest version from GitHub API
 	version, err := c.fetchFromGitHub()
 	if err != nil {
-		// 如果API失败但缓存存在，返回缓存版本
+		// If API fails but cache exists, return cached version
 		if cached, err := c.readCache(); err == nil && cached != nil {
 			return cached.Version, nil
 		}
 		return "", err
 	}
 
-	// 更新缓存
+	// Update cache
 	if err := c.writeCache(version); err != nil {
-		return "", fmt.Errorf("更新缓存失败: %w", err)
+		return "", fmt.Errorf("failed to update cache: %w", err)
 	}
 
 	return version, nil
@@ -94,22 +94,22 @@ func (c *Checker) fetchFromGitHub() (string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", c.RepoOwner, c.RepoName)
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("GitHub API请求失败: %w", err)
+		return "", fmt.Errorf("GitHub API request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("GitHub API返回非200状态码: %d", resp.StatusCode)
+		return "", fmt.Errorf("GitHub API returned non-200 status code: %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("读取响应体失败: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	var release githubRelease
 	if err := json.Unmarshal(body, &release); err != nil {
-		return "", fmt.Errorf("解析JSON失败: %w", err)
+		return "", fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
 	return strings.TrimPrefix(release.TagName, "v"), nil

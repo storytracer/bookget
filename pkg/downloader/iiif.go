@@ -39,14 +39,14 @@ type IIIFInfo struct {
 	Width    int    `json:"width"`
 	Height   int    `json:"height"`
 
-	// 使用自定义类型处理profile字段
+	// Use custom type to handle profile field
 	// Profile can be string, object, or array
 	Profile json.RawMessage `json:"profile"`
 
 	Qualities []string `json:"qualities,omitempty"`
 	Formats   []string `json:"formats,omitempty"`
 
-	// 兼容性字段
+	// Compatibility fields
 	Sizes []struct {
 		Width  int `json:"width"`
 		Height int `json:"height"`
@@ -60,7 +60,7 @@ type IIIFInfo struct {
 		Overlap      int   `json:"overlap,omitempty"`
 	} `json:"tiles,omitempty"`
 
-	// 内部计算字段
+	// Internal computed fields
 	// Computed fields
 	version  int    // 2 or 3
 	baseURL  string // base URL without info.json
@@ -89,55 +89,55 @@ type IIIFXMLInfo struct {
 	URL string `xml:"Url,attr"`
 }
 
-// TileURLFormat 定义 tileURL 的格式配置
+// TileURLFormat defines the format configuration for tileURL
 type TileURLFormat struct {
-	// 模板字符串，支持 Go 模板语法
-	// 可用变量: .ID, .Level, .X, .Y, .Format, .Width, .Height
-	// 可用变量: .ServerURL,.URL, ==.ID
+	// Template string, supports Go template syntax
+	// Available variables: .ID, .Level, .X, .Y, .Format, .Width, .Height
+	// Available variables: .ServerURL,.URL, ==.ID
 	Template string
 
-	// 预编译的模板
+	// Pre-compiled template
 	compiledTemplate *template.Template
-	// 固定值字段
+	// Fixed value fields
 	FixedValues map[string]interface{}
 }
 
 /*
-模板变量说明
-IIIF 格式可用变量:
-.ID: 图像ID
-.X: 拼图X坐标
-.Y: 拼图Y坐标
-.Width: 拼图宽度
-.Height: 拼图高度
-.Format: 图像格式
+Template variable descriptions
+IIIF format available variables:
+.ID: Image ID
+.X: Tile X coordinate
+.Y: Tile Y coordinate
+.Width: Tile width
+.Height: Tile height
+.Format: Image format
 
-DeepZoom 格式可用变量:
-.ServerURL: 服务器URL
-.Level: 缩放级别
-.X: 拼图X索引
-.Y: 拼图Y索引
-.Format: 图像格式
+DeepZoom format available variables:
+.ServerURL: Server URL
+.Level: Zoom level
+.X: Tile X index
+.Y: Tile Y index
+.Format: Image format
 */
 type IIIFDownloader struct {
 	client *http.Client
-	// tileURL 格式配置
-	iiifTileFormat     TileURLFormat // IIIF 格式的 tileURL
-	DeepzoomTileFormat TileURLFormat // DeepZoom 格式的 tileURL
+	// tileURL format configuration
+	iiifTileFormat     TileURLFormat // IIIF format tileURL
+	DeepzoomTileFormat TileURLFormat // DeepZoom format tileURL
 
-	//config.ini传过来
+	// Configuration from config.ini
 	userAgent     string
 	maxRetries    int
 	jpgQuality    int
 	maxConcurrent int
-	quiet         bool // 静默模式，不显示进度条
+	quiet         bool // Quiet mode, don't show progress bars
 
 	cookies []http.Cookie
 	headers http.Header
 }
 
 func NewIIIFDownloader(c *config.Input) *IIIFDownloader {
-	// 创建自定义 Transport 忽略 SSL 验证
+	// Create custom Transport to ignore SSL verification
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -157,16 +157,16 @@ func NewIIIFDownloader(c *config.Input) *IIIFDownloader {
 		cookies:       cookies,
 		headers:       headers,
 	}
-	// 设置 v2 模板（支持简写尺寸和旧版字段名）
+	// Set v2 template (supports shorthand sizes and legacy field names)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{.Width}},/0/default.{{.Format}}")
 
-	// 或更完整的 v2 格式（包含协议声明）
+	// Or more complete v2 format (including protocol declaration)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/full/{{.Width}},/0/default.{{.Format}}")
 
-	// 设置 v3 模板（严格尺寸和新版字段名）
+	// Set v3 template (strict sizes and new field names)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{.Width}},{{.Height}}/0/default.{{.Format}}")
 
-	// 或带区域参数的 v3 格式
+	// Or v3 format with region parameters
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/max/{{.Width}},{{.Height}}/0/default.{{.Format}}")
 
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{if .sizeUpscaling}}^{{end}}{{.Width}},{{.Height}}/0/default.{{.Format}}")
@@ -177,7 +177,7 @@ func NewIIIFDownloader(c *config.Input) *IIIFDownloader {
 }
 
 func NewIIIFDownloaderDefault() *IIIFDownloader {
-	// 创建自定义 Transport 忽略 SSL 验证
+	// Create custom Transport to ignore SSL verification
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -192,19 +192,19 @@ func NewIIIFDownloaderDefault() *IIIFDownloader {
 		jpgQuality:    JPGQuality,
 		maxConcurrent: maxConcurrent,
 	}
-	// 设置 v2 模板（支持简写尺寸和旧版字段名）
+	// Set v2 template (supports shorthand sizes and legacy field names)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{.Width}},/0/default.{{.Format}}")
 
-	// 或更完整的 v2 格式（包含协议声明）
+	// Or more complete v2 format (including protocol declaration)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/full/{{.Width}},/0/default.{{.Format}}")
 
-	// 设置 v3 模板（严格尺寸和新版字段名）
+	// Set v3 template (strict sizes and new field names)
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{.Width}},{{.Height}}/0/default.{{.Format}}")
 
-	// 或带区域参数的 v3 格式
+	// Or v3 format with region parameters
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/max/{{.Width}},{{.Height}}/0/default.{{.Format}}")
 
-	// 更新模板，在size部分支持 ^ 前缀
+	// Update template to support ^ prefix in size section
 	//dl.SetIIIFTileFormat("{{.ID}}/{{.X}},{{.Y}},{{.Width}},{{.Height}}/{{if .sizeUpscaling}}^{{end}}{{.Width}},{{.Height}}/0/default.{{.Format}}")
 
 	dl.SetDeepZoomTileFormat("{{.URL}}_files/{{.Level}}/{{.X}}_{{.Y}}.{{.Format}}")
@@ -212,11 +212,11 @@ func NewIIIFDownloaderDefault() *IIIFDownloader {
 	return dl
 }
 
-// SetIIIFTileFormat 设置 IIIF 格式的 tileURL 模板
+// SetIIIFTileFormat sets IIIF format tileURL template
 func (d *IIIFDownloader) SetIIIFTileFormat(format string) error {
 	tmpl, err := template.New("iiifTile").Parse(format)
 	if err != nil {
-		return fmt.Errorf("解析 IIIF tileURL 模板失败: %v", err)
+		return fmt.Errorf("failed to parse IIIF tileURL template: %v", err)
 	}
 	d.iiifTileFormat = TileURLFormat{
 		Template:         format,
@@ -225,11 +225,11 @@ func (d *IIIFDownloader) SetIIIFTileFormat(format string) error {
 	return nil
 }
 
-// SetDeepZoomTileFormat 设置 DeepZoom 格式的 tileURL 模板
+// SetDeepZoomTileFormat sets DeepZoom format tileURL template
 func (d *IIIFDownloader) SetDeepZoomTileFormat(format string) error {
 	tmpl, err := template.New("deepzoomTile").Parse(format)
 	if err != nil {
-		return fmt.Errorf("解析 DeepZoom tileURL 模板失败: %v", err)
+		return fmt.Errorf("failed to parse DeepZoom tileURL template: %v", err)
 	}
 	d.DeepzoomTileFormat = TileURLFormat{
 		Template:         format,
@@ -246,66 +246,66 @@ func (d *IIIFDownloader) SetQuiet(quiet bool) {
 func (d *IIIFDownloader) Dezoomify(ctx context.Context, infoURL string, outputPath string, args []string) error {
 	headers, err := d.argsToHeaders(args)
 	if err != nil {
-		return fmt.Errorf("转换header失败: %v", err)
+		return fmt.Errorf("failed to convert headers: %v", err)
 	}
-	// 1. 获取IIIF信息（自动检测版本）
+	// 1. Get IIIF info (auto-detect version)
 	info, err := d.getIIIFInfoByURL(ctx, infoURL, headers)
 	if err != nil {
-		return fmt.Errorf("获取图像信息失败: %v", err)
+		return fmt.Errorf("failed to get image info: %v", err)
 	}
 
-	// 2. 自动选择v2/v3下载器
+	// 2. Auto-select v2/v3 downloader
 	finalImg, err := d.DownloadTiles(ctx, info, headers)
 	if err != nil {
-		return fmt.Errorf("处理拼图失败: %v", err)
+		return fmt.Errorf("failed to process tiles: %v", err)
 	}
 
-	// 3. 保存图像
+	// 3. Save image
 	if err := d.saveImage(finalImg, outputPath); err != nil {
-		return fmt.Errorf("保存图像失败: %v", err)
+		return fmt.Errorf("failed to save image: %v", err)
 	}
 
 	if !d.quiet {
-		fmt.Printf("\n图像合并完成，已保存到 %s\n", outputPath)
+		fmt.Printf("\nImage merge completed, saved to %s\n", outputPath)
 	}
 	return nil
 }
 
-// DezoomifyWithContent 直接使用XML或JSON内容进行下载
+// DezoomifyWithContent directly uses XML or JSON content for downloading
 func (d *IIIFDownloader) DezoomifyWithContent(ctx context.Context, content string, outputPath string, args []string) error {
 	headers, err := d.argsToHeaders(args)
 	if err != nil {
-		return fmt.Errorf("转换header失败: %v", err)
+		return fmt.Errorf("failed to convert headers: %v", err)
 	}
 
-	// 尝试解析为JSON
+	// Try to parse as JSON
 	var jsonInfo IIIFInfo
 	if err := json.Unmarshal([]byte(content), &jsonInfo); err == nil {
-		// 成功解析为JSON
+		// Successfully parsed as JSON
 		if len(jsonInfo.Tiles) == 0 {
-			return fmt.Errorf("JSON内容中未找到拼图配置信息")
+			return fmt.Errorf("tile configuration not found in JSON content")
 		}
 
 		finalImg, err := d.DownloadTiles(ctx, &jsonInfo, headers)
 		if err != nil {
-			return fmt.Errorf("处理拼图失败: %v", err)
+			return fmt.Errorf("failed to process tiles: %v", err)
 		}
 
 		return d.saveImage(finalImg, outputPath)
 	}
 
-	// 尝试解析为XML
+	// Try to parse as XML
 	var xmlInfo IIIFXMLInfo
 	if err := xml.Unmarshal([]byte(content), &xmlInfo); err == nil {
 		finalImg, err := d.downloadAndMergeXMLTiles(ctx, &xmlInfo, headers)
 		if err != nil {
-			return fmt.Errorf("处理拼图失败: %v", err)
+			return fmt.Errorf("failed to process tiles: %v", err)
 		}
 
 		return d.saveImage(finalImg, outputPath)
 	}
 
-	return fmt.Errorf("内容既不是有效的JSON也不是有效的XML")
+	return fmt.Errorf("content is neither valid JSON nor valid XML")
 }
 
 func (d *IIIFDownloader) DownloadTiles(ctx context.Context, info interface{}, headers http.Header) (image.Image, error) {
@@ -322,10 +322,10 @@ func (d *IIIFDownloader) DownloadTiles(ctx context.Context, info interface{}, he
 	}
 }
 
-// IIIF v2 专用下载函数
+// IIIF v2 dedicated download function
 func (d *IIIFDownloader) downloadIIIFv2Tiles(ctx context.Context, info *IIIFInfo, headers http.Header) (image.Image, error) {
 	tileConfig := info.Tiles[0]
-	tileSize := tileConfig.Width // v2通常使用正方形瓦片
+	tileSize := tileConfig.Width // v2 typically uses square tiles
 	overlap := tileConfig.Overlap
 	effectiveTileSize := tileSize - overlap*2
 
@@ -394,7 +394,7 @@ func (d *IIIFDownloader) downloadIIIFv2Tiles(ctx context.Context, info *IIIFInfo
 				img, err := d.downloadImageWithRetry(ctx, tileURL, headers, d.maxRetries)
 				if err != nil || img == nil {
 					select {
-					case errChan <- fmt.Errorf("tile(%d,%d)下载失败: %v", x, y, err):
+					case errChan <- fmt.Errorf("tile(%d,%d) download failed: %v", x, y, err):
 					default:
 					}
 					return
@@ -702,12 +702,12 @@ func (d *IIIFDownloader) getIIIFInfo(ctx context.Context, url string, headers ht
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("服务器返回错误状态码: %d", resp.StatusCode)
+		return nil, fmt.Errorf("server returned error status code: %d", resp.StatusCode)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取响应体失败: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 	info, err := d.parseIIIFResponse(data)
 	if err != nil {
@@ -715,7 +715,7 @@ func (d *IIIFDownloader) getIIIFInfo(ctx context.Context, url string, headers ht
 	}
 
 	if len(info.Tiles) == 0 {
-		return nil, fmt.Errorf("未找到拼图配置信息")
+		return nil, fmt.Errorf("tile configuration not found")
 	}
 
 	return info, nil
@@ -758,17 +758,17 @@ func (d *IIIFDownloader) getIIIFXMLInfo(ctx context.Context, url string, headers
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("服务器返回错误状态码: %d", resp.StatusCode)
+		return nil, fmt.Errorf("server returned error status code: %d", resp.StatusCode)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取响应体失败: %v", err)
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
 	var info IIIFXMLInfo
 	if err := xml.Unmarshal(data, &info); err != nil {
-		return nil, fmt.Errorf("XML解析失败: %v", err)
+		return nil, fmt.Errorf("XML parsing failed: %v", err)
 	}
 
 	imagePath, err := d.getImagePathFromXMLURL(url)
@@ -822,17 +822,17 @@ func (d *IIIFDownloader) downloadImage(ctx context.Context, url string, headers 
 		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusInternalServerError {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("服务器返回错误状态码: %d", resp.StatusCode)
+		return nil, fmt.Errorf("server returned error status code: %d", resp.StatusCode)
 	}
 
 	imgData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取图像数据失败: %v", err)
+		return nil, fmt.Errorf("failed to read image data: %v", err)
 	}
 
 	img, _, err := image.Decode(bytes.NewReader(imgData))
 	if err != nil {
-		return nil, fmt.Errorf("解码图像失败: %v", err)
+		return nil, fmt.Errorf("failed to decode image: %v", err)
 	}
 
 	return img, nil
@@ -841,7 +841,7 @@ func (d *IIIFDownloader) downloadImage(ctx context.Context, url string, headers 
 func (d *IIIFDownloader) saveImage(img image.Image, path string) error {
 	outFile, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("创建文件失败: %v", err)
+		return fmt.Errorf("failed to create file: %v", err)
 	}
 	defer outFile.Close()
 
@@ -851,7 +851,7 @@ func (d *IIIFDownloader) saveImage(img image.Image, path string) error {
 	case ".png":
 		return png.Encode(outFile, img)
 	default:
-		return fmt.Errorf("不支持的图像格式: %s", ext)
+		return fmt.Errorf("unsupported image format: %s", ext)
 	}
 }
 
@@ -860,13 +860,13 @@ func (d *IIIFDownloader) argsToHeaders(args []string) (http.Header, error) {
 	for i := 0; i < len(args); i++ {
 		if args[i] == "-H" {
 			if i+1 >= len(args) {
-				return nil, fmt.Errorf("缺少header值")
+				return nil, fmt.Errorf("missing header value")
 			}
 			headerStr := args[i+1]
 			i++
 			parts := strings.SplitN(headerStr, ":", 2)
 			if len(parts) != 2 {
-				return nil, fmt.Errorf("无效的header格式: %s", headerStr)
+				return nil, fmt.Errorf("invalid header format: %s", headerStr)
 			}
 			key := strings.TrimSpace(parts[0])
 			value := strings.TrimSpace(parts[1])
@@ -1152,7 +1152,7 @@ func (d *IIIFDownloader) buildDeepZoomTileURL(data map[string]interface{}) (stri
 	var buf bytes.Buffer
 	err := d.DeepzoomTileFormat.compiledTemplate.Execute(&buf, mergedData)
 	if err != nil {
-		return "", fmt.Errorf("执行 DeepZoom tileURL 模板失败: %v", err)
+		return "", fmt.Errorf("failed to execute DeepZoom tileURL template: %v", err)
 	}
 
 	return buf.String(), nil
@@ -1239,7 +1239,7 @@ func (d *IIIFDownloader) buildIIIFTileURL(data map[string]interface{}) (string, 
 
 	var buf bytes.Buffer
 	if err := d.iiifTileFormat.compiledTemplate.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("模板渲染失败: %v", err)
+		return "", fmt.Errorf("template rendering failed: %v", err)
 	}
 
 	// 确保返回完整URL

@@ -8,7 +8,7 @@ import (
 
 const (
 	Version              = "25.0701"
-	CatalogVersionInfo   = "#版本=1.0" // 书签目录版本TXT
+	CatalogVersionInfo   = "#版本=1.0" // Bookmark catalog version TXT (keep Chinese for format compatibility)
 	defaultUserAgent     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
 	defaultFileExtension = ".jpg"
 

@@ -44,12 +44,12 @@ public:
     BrowserWindow(){};
     ~BrowserWindow();
 
-    // 窗口尺寸常量
+    // Window size constants
     static const int c_uiBarHeight = 70;
     static const int c_optionsDropdownHeight = 108;
     static const int c_optionsDropdownWidth = 200;
 
-    // 窗口管理
+    // Window management
     static ATOM RegisterClass(_In_ HINSTANCE hInstance);
     static LRESULT CALLBACK WndProcStatic(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -57,11 +57,11 @@ public:
 
 
 
-    // WebView管理
+    // WebView management
     HRESULT OpenWindowTab(wchar_t *webUrl, bool isTab = false);
     HRESULT ExecuteScriptFile(const std::wstring& scriptPath, ICoreWebView2* webview);
 
-    // 标签页管理
+    // Tab management
     HRESULT HandleTabURIUpdate(size_t tabId, ICoreWebView2* webview);
     HRESULT HandleTabHistoryUpdate(size_t tabId, ICoreWebView2* webview);
     HRESULT HandleTabNavStarting(size_t tabId, ICoreWebView2* webview);
@@ -72,11 +72,11 @@ public:
     void HandleSharedMemoryUpdate(LPARAM lParam);
 
 
-    // 工作线程
+    // Worker thread
     void StartBackgroundThread();
     void StopBackgroundThread();
 
-    // 实用工具
+    // Utility tools
     static std::wstring GetAppDataDirectory();
     std::wstring GetFullPathFor(LPCWSTR relativePath);
     std::wstring GetFilePathAsURI(std::wstring fullPath);
@@ -85,13 +85,13 @@ public:
     static void CheckFailure(HRESULT hr, LPCWSTR errorMessage = L"");
 
 private:
-    //工作线程
+    // Worker thread
     std::mutex m_threadMutex;
     std::thread m_sharedMemoryThread;
     std::atomic<bool> m_stopThread{false};
 
 protected:
-    // 窗口资源
+    // Window resources
     HINSTANCE m_hInst = nullptr;
     HWND m_hWnd = nullptr;
     static WCHAR s_windowClass[MAX_LOADSTRING];
@@ -100,7 +100,7 @@ protected:
     int m_minWindowHeight = 0;
 
 public:
-    // WebView资源
+    // WebView resources
     wil::com_ptr<ICoreWebView2Environment> m_uiEnv;
     wil::com_ptr<ICoreWebView2Environment> m_contentEnv;
 protected:
@@ -111,7 +111,7 @@ protected:
     std::map<size_t, std::unique_ptr<Tab>> m_tabs;
     size_t m_activeTabId = 0;
 
-    // WebView事件处理
+    // WebView event handling
     EventRegistrationToken m_controlsUIMessageBrokerToken;
     EventRegistrationToken m_optionsUIMessageBrokerToken;
     EventRegistrationToken m_controlsZoomToken;
@@ -122,7 +122,7 @@ protected:
 
 
 public:
-    // 初始化方法
+    // Initialization methods
     BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
     HRESULT InitUIWebViews();
     HRESULT CreateBrowserControlsWebView();
@@ -134,17 +134,17 @@ public:
     HRESULT SwitchToTab(size_t tabId);
 
 
-    // 缓存和Cookie管理
+    // Cache and Cookie management
     HRESULT ClearContentCache();
     HRESULT ClearControlsCache();
     HRESULT ClearContentCookies();
     HRESULT ClearControlsCookies();
 
     
-    // 下载管理
+    // Download management
     Downloader m_downloader;
 
-    // 下载处理
+    // Download handling
     HRESULT HandleTabWebResourceResponseReceived(ICoreWebView2* sender, 
         ICoreWebView2WebResourceResponseReceivedEventArgs* args);
     bool ShouldInterceptResponse(const std::wstring& sUrl, 

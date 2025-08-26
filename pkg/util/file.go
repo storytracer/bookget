@@ -88,7 +88,7 @@ func FileName(uri string) string {
 	return name
 }
 
-// 压缩文件
+// Compress files
 func Zip(srcFile string, destZip string) error {
 	zipFile, err := os.Create(destZip)
 	if err != nil {
@@ -130,7 +130,7 @@ func Zip(srcFile string, destZip string) error {
 	return err
 }
 
-// 解压缩
+// Decompress
 func Unzip(zipFile string, destDir string, sortId string) error {
 	zipReader, err := zip.OpenReader(zipFile)
 	if err != nil {
@@ -149,13 +149,13 @@ func Unzip(zipFile string, destDir string, sortId string) error {
 			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
 				return err
 			}
-			inFile, err := f.Open() //这个是从压缩文件读取出来的
+			inFile, err := f.Open() // This reads from the compressed file
 			if err != nil {
 				return err
 			}
 			defer inFile.Close()
 
-			outFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode()) //创建的新文件
+			outFile, err := os.OpenFile(fpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode()) // Created new file
 			if err != nil {
 				return err
 			}

@@ -5,7 +5,7 @@
 
 
 
-// 资源响应处理
+// Resource response handling
 HRESULT BrowserWindow::HandleTabWebResourceResponseReceived(ICoreWebView2* sender, ICoreWebView2WebResourceResponseReceivedEventArgs* args)
 {
     wil::com_ptr<ICoreWebView2WebResourceRequest> request;
@@ -63,15 +63,15 @@ bool BrowserWindow::DownloadFile(const std::wstring& sUrl, IStream *content)
 
     int sleepTime = Config::GetInstance().GetSleepTime();
     if (sleepTime > 0)
-        std::this_thread::sleep_for(std::chrono::seconds(sleepTime)); // 3 秒延时
+        std::this_thread::sleep_for(std::chrono::seconds(sleepTime)); // 3 second delay
 
     int mode = m_downloader.GetDownloaderMode();
     if (mode == 0) {
-        // 下载完成后继续下一个
+        // Continue to next download after completion
         PostMessage(m_hWnd, WM_APP_DOWNLOAD_NEXT, 0, 0);
     }
     else if (mode == 1) {
-        //执行 javascript 脚本
+        // Execute javascript script
         std::wstring scriptPath;
         std::string narrow_url = Util::WideToUtf8(sUrl);
         for (const auto& site : Config::GetInstance().GetSiteConfigs()) {
@@ -85,7 +85,7 @@ bool BrowserWindow::DownloadFile(const std::wstring& sUrl, IStream *content)
         }
     } 
     else if (mode == 2) {
-        // 写入共享内存
+        // Write to shared memory
         SharedMemory::GetInstance().WriteImagePath(filePath.c_str());
     }
     return ret;
@@ -96,9 +96,9 @@ bool BrowserWindow::DownloadFile(const std::wstring& sUrl,ICoreWebView2HttpReque
     m_downloader.DownloadFile(sUrl.c_str(), headers);
     int sleepTime = Config::GetInstance().GetSleepTime();
     if (sleepTime > 0)
-            std::this_thread::sleep_for(std::chrono::seconds(sleepTime)); // 3 秒延时
+            std::this_thread::sleep_for(std::chrono::seconds(sleepTime)); // 3 second delay
 
-        //执行 javascript 脚本
+        // Execute javascript script
     std::wstring scriptPath;
     std::string narrow_url = Util::WideToUtf8(sUrl);
     for (const auto& site : Config::GetInstance().GetSiteConfigs()) {

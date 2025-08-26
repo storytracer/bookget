@@ -32,7 +32,7 @@ type ProcessEntry32 struct {
 	ParentProcessID uint32
 	PriClassBase    int32
 	Flags           uint32
-	ExeFile         [MAX_PATH]uint16 // 使用 uint16 而不是 byte
+	ExeFile         [MAX_PATH]uint16 // Use uint16 instead of byte
 }
 
 func RunCommand(ctx context.Context, text string) error {
@@ -43,13 +43,13 @@ func RunCommand(ctx context.Context, text string) error {
 	} else {
 		cmd = exec.CommandContext(ctx, "bash", "-c", text)
 	}
-	//捕获标准输出
+	// Capture standard output
 	stdout, err := cmd.StdoutPipe()
 	cmd.Stderr = cmd.Stdout
 	if err != nil {
 		return err
 	}
-	// 执行命令cmd.CombinedOutput(),且捕获输出
+	// Execute command cmd.CombinedOutput() and capture output
 	//output, err = cmd.CombinedOutput()
 	if err = cmd.Start(); err != nil {
 		return err
@@ -63,10 +63,10 @@ func RunCommand(ctx context.Context, text string) error {
 }
 
 func GetOutput(reader *bufio.Reader) {
-	var sumOutput string //统计屏幕的全部输出内容
+	var sumOutput string // Collect all screen output content
 	outputBytes := make([]byte, 200)
 	for {
-		n, err := reader.Read(outputBytes) //获取屏幕的实时输出(并不是按照回车分割，所以要结合sumOutput)
+		n, err := reader.Read(outputBytes) // Get real-time screen output (not split by newlines, so combine with sumOutput)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -75,13 +75,13 @@ func GetOutput(reader *bufio.Reader) {
 			sumOutput += err.Error()
 		}
 		output := string(outputBytes[:n])
-		fmt.Print(output) //输出屏幕内容
+		fmt.Print(output) // Output screen content
 		sumOutput += output
 	}
 	return
 }
 
-// PrintSleepTime 打印0-60秒等待
+// PrintSleepTime prints 0-60 second wait
 func PrintSleepTime(sec int) {
 	if sec <= 0 || sec > 60 {
 		return
@@ -162,7 +162,7 @@ func isProcessRunning(processName string) (bool, error) {
 	// 创建进程快照
 	snapshot, _, err := createToolhelp32Snapshot.Call(TH32CS_SNAPPROCESS, 0)
 	if snapshot == uintptr(syscall.InvalidHandle) {
-		return false, fmt.Errorf("创建进程快照失败: %v", err)
+		return false, fmt.Errorf("failed to create process snapshot: %v", err)
 	}
 	defer closeHandle.Call(snapshot)
 
@@ -172,23 +172,23 @@ func isProcessRunning(processName string) (bool, error) {
 	// 获取第一个进程
 	ret, _, err := process32First.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
 	if ret == 0 {
-		return false, fmt.Errorf("获取进程信息失败: %v", err)
+		return false, fmt.Errorf("failed to get process info: %v", err)
 	}
 
 	for {
-		// 正确转换 UTF-16 字符串
+		// Correctly convert UTF-16 string
 		exeFile := syscall.UTF16ToString(entry.ExeFile[:])
-		// 去除字符串末尾的空字符
+		// Remove null characters at end of string
 		exeFile = strings.TrimRight(exeFile, "\x00")
 		if strings.EqualFold(exeFile, processName) {
 			return true, nil
 		}
 
-		// 获取下一个进程
+		// Get next process
 		ret, _, err := process32Next.Call(snapshot, uintptr(unsafe.Pointer(&entry)))
 		if ret == 0 {
 			if errno, ok := err.(syscall.Errno); ok && errno == 0 {
-				break // 正常结束
+				break // Normal end
 			}
 			return false, nil
 		}

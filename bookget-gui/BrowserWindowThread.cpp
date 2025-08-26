@@ -3,14 +3,14 @@
 
 void BrowserWindow::StartBackgroundThread() {
     std::lock_guard<std::mutex> lock(m_threadMutex);
-    StopBackgroundThread();  // 确保之前的线程已停止
+    StopBackgroundThread();  // Ensure previous thread is stopped
 
     m_sharedMemoryThread = std::thread([this]() {
         while (!m_stopThread.load(std::memory_order_relaxed)) {
-            // 读取精简后的共享内存数据
+            // Read simplified shared memory data
             auto data = SharedMemory::GetInstance().Read();
             
-             // 检查是否有新图片路径需要处理
+             // Check if there are new image paths to process
             if (data.URLReady && data.ImageReady && data.PID != GetCurrentProcessId()) {
                 auto* sharedData = new SharedMemoryDataMini();
                 sharedData->ImageReady = data.ImageReady;
@@ -21,9 +21,9 @@ void BrowserWindow::StartBackgroundThread() {
                 
                 PostMessage(m_hWnd, WM_APP_UPDATE_UI, 0, reinterpret_cast<LPARAM>(sharedData));
             }
-            // 检查是否有新URL需要处理
+            // Check if there are new URLs to process
             else if (data.URLReady && data.PID != GetCurrentProcessId()) {
-                // 仅传递必要数据到UI线程
+                // Only pass necessary data to UI thread
                 auto* sharedData = new SharedMemoryDataMini();
                 sharedData->URLReady = data.URLReady;
                 sharedData->PID = data.PID;
@@ -32,7 +32,7 @@ void BrowserWindow::StartBackgroundThread() {
                 PostMessage(m_hWnd, WM_APP_UPDATE_UI, 0, reinterpret_cast<LPARAM>(sharedData));
             }
                    
-            // 降低CPU使用率
+            // Reduce CPU usage
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     });
@@ -41,21 +41,21 @@ void BrowserWindow::StartBackgroundThread() {
 }
 
 void BrowserWindow::StopBackgroundThread() {
-    m_stopThread = true; // 先设置停止标志
-    // 确保线程已完全停止
+    m_stopThread = true; // Set stop flag first
+    // Ensure thread is completely stopped
     if (m_sharedMemoryThread.joinable()) {
         m_sharedMemoryThread.join();
     }
 
     m_downloader.Stop();
 
-    m_stopThread = false;  // 重置标志
+    m_stopThread = false;  // Reset flag
 }
 
 
 
 void BrowserWindow::HandleSharedMemoryUpdate(LPARAM lParam) {
-    // 获取传递过来的数据
+    // Get the passed data
     auto* data = reinterpret_cast<SharedMemoryData*>(lParam);
 
     auto* sharedData = SharedMemory::GetInstance().GetMutex();
@@ -64,27 +64,27 @@ void BrowserWindow::HandleSharedMemoryUpdate(LPARAM lParam) {
         return;
      }
     
-    // 处理图片下载模式
+    // Handle image download mode
     if (sharedData->URLReady && sharedData->ImageReady && m_tabs.find(m_activeTabId) != m_tabs.end() && sharedData->PID != GetCurrentProcessId()) {
-        // 重置标志位
+        // Reset flags
         sharedData->URLReady = false;
         m_downloader.Reset(sharedData->URL, 2);
-        // 配置下载处理器
+        // Configure download handler
         m_tabs.at(m_activeTabId)->SetupWebViewListeners();
-        // 导航到URL
+        // Navigate to URL
         m_tabs.at(m_activeTabId)->m_contentWebView->Navigate(sharedData->URL);
     } 
-    // 处理普通URL导航
+    // Handle normal URL navigation
     else if (sharedData->URLReady && m_tabs.find(m_activeTabId) != m_tabs.end()) {
-        // 重置标志位
+        // Reset flags
         sharedData->URLReady = false;
             
-        // 导航到URL
+        // Navigate to URL
         m_tabs.at(m_activeTabId)->m_contentWebView->Navigate(sharedData->URL);
     }
         
     
-    // 清理内存
+    // Clean up memory
     delete data;
     SharedMemory::GetInstance().ReleaseMutex();
 

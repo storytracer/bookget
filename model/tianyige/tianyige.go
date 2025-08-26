@@ -32,7 +32,7 @@ type ImageRecord struct {
 	File        interface{} `json:"file"`
 }
 
-// 页面
+// Page
 type ResponsePage struct {
 	Code int       `json:"code"`
 	Msg  string    `json:"msg"`

@@ -7,7 +7,7 @@ import (
 
 var Conf Input
 
-// initSeq    false = 最小值 <= 当前页码 <=  最大值
+// initSeq    false = minimum value <= current page number <= maximum value
 func initSeqRange() {
 	if Conf.Seq == "" || !strings.Contains(Conf.Seq, ":") {
 		return
@@ -23,7 +23,7 @@ func initSeqRange() {
 	return
 }
 
-// initVolumeRange    false = 最小值 <= 当前页码 <=  最大值
+// initVolumeRange    false = minimum value <= current page number <= maximum value
 func initVolumeRange() {
 	m := strings.Split(Conf.Volume, ":")
 	if len(m) == 1 {
@@ -36,53 +36,53 @@ func initVolumeRange() {
 	return
 }
 
-// PageRange    return true (最小值 <= 当前页码 <=  最大值)
+// PageRange    return true (minimum value <= current page number <= maximum value)
 func PageRange(index, size int) bool {
-	//未设置
+	//not set
 	if Conf.SeqStart <= 0 {
 		return true
 	}
-	//结束页负数
+	//negative end page
 	if Conf.SeqEnd < 0 && (index-size >= Conf.SeqEnd) {
 		return false
 	}
-	//结束页
+	//end page
 	if Conf.SeqEnd > 0 {
-		//结束了
+		//finished
 		if index >= Conf.SeqEnd {
 			return false
 		}
-		//起始页
+		//start page
 		if index+1 >= Conf.SeqStart {
 			return true
 		}
-	} else if index+1 >= Conf.SeqStart { //在起始页后
+	} else if index+1 >= Conf.SeqStart { //after start page
 		return true
 	}
 	return false
 }
 
-// VolumeRange    return true (最小值 <= 当前页码 <=  最大值)
+// VolumeRange    return true (minimum value <= current page number <= maximum value)
 func VolumeRange(index int) bool {
-	//未设置
+	//not set
 	if Conf.VolStart <= 0 {
 		return true
 	}
-	//结束页负数
+	//negative end page
 	if Conf.VolEnd < 0 && index > Conf.VolStart {
 		return false
 	}
-	//结束页
+	//end page
 	if Conf.VolEnd > 0 {
-		//结束了
+		//finished
 		if index >= Conf.VolEnd {
 			return false
 		}
-		//起始页
+		//start page
 		if index+1 >= Conf.VolStart {
 			return true
 		}
-	} else if index+1 >= Conf.VolStart { //在起始页后
+	} else if index+1 >= Conf.VolStart { //after start page
 		return true
 	}
 	return false

@@ -12,34 +12,34 @@ import (
 )
 
 type Input struct {
-	DownloaderMode int  //自动检测下载URL。可选值[0|1|2]，;0=默认;1=通用批量下载（类似IDM、迅雷）;2= IIIF manifest.json 自动检测下载图片
-	UseDzi         bool //启用Dezoomify下载IIIF
+	DownloaderMode int  // Auto-detect download URL. Values [0|1|2]: 0=default; 1=generic batch download (like IDM/Thunder); 2=IIIF manifest.json auto-detect image download
+	UseDzi         bool // Enable Dezoomify for IIIF downloads
 
 	DUrl       string
-	UrlsFile   string //已废弃
-	CookieFile string //输入 chttp.txt
-	HeaderFile string //输入 header.txt
+	UrlsFile   string // Deprecated
+	CookieFile string // Input chttp.txt
+	HeaderFile string // Input header.txt
 
-	Seq      string //页面范围 4:434
+	Seq      string // Page range 4:434
 	SeqStart int
 	SeqEnd   int
-	Volume   string //册范围 4:434
+	Volume   string // Volume range 4:434
 	VolStart int
 	VolEnd   int
 
-	Sleep     int    //限速
-	Directory string //下载文件存放目录，默认为当前文件夹下 Downloads 目录下
-	Format    string //;全高清图下载时，指定宽度像素（16开纸185mm*260mm，像素2185*3071）
-	UserAgent string //自定义UserAgent
+	Sleep     int    // Rate limiting
+	Directory string // Download directory, defaults to Downloads folder in current directory
+	Format    string // For high-res image downloads, specify width pixels (16K paper 185mm*260mm, pixels 2185*3071)
+	UserAgent string // Custom UserAgent
 
 	Threads       int
 	MaxConcurrent int
-	PageRate      int           //IIIF模式下页面并发数
-	Timeout       time.Duration //超时秒数
-	Retries       int           //重试次数
+	PageRate      int           // Page concurrency for IIIF mode
+	Timeout       time.Duration // Timeout seconds
+	Retries       int           // Retry count
 
-	FileExt string //指定下载的扩展名
-	Quality int    //JPG品质
+	FileExt string // Specify download file extension
+	Quality int    // JPG quality
 
 	Help    bool
 	Version bool
@@ -49,50 +49,50 @@ func Init(ctx context.Context) bool {
 
 	dir, _ := os.Getwd()
 
-	//你们为什么没有良好的电脑使用习惯？中文虽好，但不适用于计算机。
+	// Directory path validation for Windows - avoid special characters that cause issues
 	if os.PathSeparator == '\\' {
 		matched, _ := regexp.MatchString(`([^A-z0-9_\\/\-:.]+)`, dir)
 		if matched {
-			fmt.Println("本软件存放目录，不能包含空格、中文等特殊符号。推荐：D:\\bookget")
-			fmt.Println("按回车键终止程序。Press Enter to exit ...")
+			fmt.Println("Software directory path cannot contain spaces, Chinese characters, or other special symbols. Recommended: D:\\bookget")
+			fmt.Println("Press Enter to exit...")
 			endKey := make([]byte, 1)
 			os.Stdin.Read(endKey)
 			os.Exit(0)
 		}
 	}
 
-	pflag.StringVarP(&Conf.DUrl, "input", "i", "", "下载 URL")
-	pflag.StringVarP(&Conf.UrlsFile, "input-file", "I", "", "下载 URLs")
-	pflag.StringVarP(&Conf.Directory, "dir", "O", path.Join(dir, "downloads"), "保存文件到目录")
+	pflag.StringVarP(&Conf.DUrl, "input", "i", "", "Download URL")
+	pflag.StringVarP(&Conf.UrlsFile, "input-file", "I", "", "Download URLs from file")
+	pflag.StringVarP(&Conf.Directory, "dir", "O", path.Join(dir, "downloads"), "Save files to directory")
 
-	pflag.StringVarP(&Conf.Seq, "sequence", "p", "", "页面范围，如4:434")
-	pflag.StringVarP(&Conf.Volume, "volume", "v", "", "多册图书，如10:20册，只下载10至20册")
+	pflag.StringVarP(&Conf.Seq, "sequence", "p", "", "Page range, e.g. 4:434")
+	pflag.StringVarP(&Conf.Volume, "volume", "v", "", "Multi-volume books, e.g. 10:20 volumes, download only volumes 10 to 20")
 
-	pflag.StringVar(&Conf.Format, "format", "full/full/0/default.jpg", "IIIF 图像请求URI")
+	pflag.StringVar(&Conf.Format, "format", "full/full/0/default.jpg", "IIIF image request URI")
 
-	pflag.StringVarP(&Conf.UserAgent, "user-agent", "U", defaultUserAgent, "http头信息 user-agent")
+	pflag.StringVarP(&Conf.UserAgent, "user-agent", "U", defaultUserAgent, "HTTP header user-agent")
 
-	pflag.BoolVarP(&Conf.UseDzi, "dzi", "d", true, "使用 IIIF/DeepZoom 拼图下载")
+	pflag.BoolVarP(&Conf.UseDzi, "dzi", "d", true, "Use IIIF/DeepZoom tile download")
 
-	pflag.StringVarP(&Conf.CookieFile, "cookies", "C", path.Join(dir, "cookie.txt"), "cookie 文件")
-	pflag.StringVarP(&Conf.HeaderFile, "headers", "H", path.Join(dir, "header.txt"), "header 文件")
+	pflag.StringVarP(&Conf.CookieFile, "cookies", "C", path.Join(dir, "cookie.txt"), "Cookie file")
+	pflag.StringVarP(&Conf.HeaderFile, "headers", "H", path.Join(dir, "header.txt"), "Header file")
 
-	pflag.IntVarP(&Conf.Threads, "threads", "n", 1, "每任务最大线程数")
-	pflag.IntVarP(&Conf.MaxConcurrent, "concurrent", "c", 16, "最大并发任务数")
-	pflag.IntVar(&Conf.PageRate, "page-rate", 1, "IIIF模式下页面并发数，默认1（顺序下载）")
+	pflag.IntVarP(&Conf.Threads, "threads", "n", 1, "Maximum threads per task")
+	pflag.IntVarP(&Conf.MaxConcurrent, "concurrent", "c", 16, "Maximum concurrent tasks")
+	pflag.IntVar(&Conf.PageRate, "page-rate", 1, "Page concurrency for IIIF mode, default 1 (sequential download)")
 
-	pflag.IntVar(&Conf.Quality, "quality", 80, "JPG品质，默认80")
-	pflag.StringVar(&Conf.FileExt, "ext", ".jpg", "指定文件扩展名[.jpg|.tif|.png]等")
+	pflag.IntVar(&Conf.Quality, "quality", 80, "JPG quality, default 80")
+	pflag.StringVar(&Conf.FileExt, "ext", ".jpg", "Specify file extension [.jpg|.tif|.png] etc.")
 
-	pflag.IntVar(&Conf.Retries, "retries", 3, "下载重试次数")
+	pflag.IntVar(&Conf.Retries, "retries", 3, "Download retry count")
 
-	pflag.DurationVarP(&Conf.Timeout, "timeout", "T", 300, "网络超时（秒)")
-	pflag.IntVar(&Conf.Sleep, "sleep", 3, "间隔睡眠几秒，一般情况 3-20")
+	pflag.DurationVarP(&Conf.Timeout, "timeout", "T", 300, "Network timeout (seconds)")
+	pflag.IntVar(&Conf.Sleep, "sleep", 3, "Interval sleep seconds, typical range 3-20")
 
-	pflag.IntVarP(&Conf.DownloaderMode, "downloader_mode", "m", 0, "下载模式。可选值[0|1|2]，;0=默认;\n1=通用批量下载（类似IDM、迅雷）;\n2= IIIF manifest.json 自动检测下载图片")
+	pflag.IntVarP(&Conf.DownloaderMode, "downloader_mode", "m", 0, "Download mode. Values [0|1|2]: 0=default;\n1=generic batch download (like IDM/Thunder);\n2=IIIF manifest.json auto-detect image download")
 
-	pflag.BoolVarP(&Conf.Help, "help", "h", false, "显示帮助")
-	pflag.BoolVarP(&Conf.Version, "version", "V", false, "显示版本 -v")
+	pflag.BoolVarP(&Conf.Help, "help", "h", false, "Show help")
+	pflag.BoolVarP(&Conf.Version, "version", "V", false, "Show version")
 	pflag.Parse()
 
 	k := len(os.Args)
@@ -115,7 +115,7 @@ func Init(ctx context.Context) bool {
 	}
 	initSeqRange()
 	initVolumeRange()
-	//保存目录处理
+	// Create download directory
 	_ = os.Mkdir(Conf.Directory, os.ModePerm)
 	//_ = os.Mkdir(CacheDir(), os.ModePerm)
 	return true

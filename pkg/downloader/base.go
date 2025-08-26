@@ -1,26 +1,26 @@
 package downloader
 
 const (
-	maxConcurrent = 16 // 最大并发下载数
+	maxConcurrent = 16 // Maximum concurrent downloads
 	userAgent     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0"
-	minFileSize   = 1024 // 最小文件大小(1KB)
+	minFileSize   = 1024 // Minimum file size (1KB)
 
 	maxRetries = 3
 	JPGQuality = 90
 )
 
-// 在 downloader.go 或相关文件中添加
+// Add in downloader.go or related files
 type Vec2d struct {
 	x int // 或 float64 根据需求
 	y int // 或 float64
 }
 
-// 可选：添加构造函数
+// Optional: add constructor function
 func NewVec2d(x, y int) Vec2d {
 	return Vec2d{x: x, y: y}
 }
 
-// 可选：添加常用方法
+// Optional: add common methods
 func (v Vec2d) Width() int  { return v.x }
 func (v Vec2d) Height() int { return v.y }
 

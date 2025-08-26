@@ -19,9 +19,9 @@ var (
 	doInit sync.Once
 )
 
-// FactoryRouter 创建路由器的工厂函数
+// FactoryRouter factory function for creating routers
 func FactoryRouter(siteID string, sUrl string) (map[string]interface{}, error) {
-	// 自动检测逻辑
+	// Auto-detection logic
 	if config.Conf.DownloaderMode == 1 {
 		siteID = "bookget"
 	} else if config.Conf.DownloaderMode == 2 || strings.Contains(sUrl, ".json") {
@@ -32,153 +32,153 @@ func FactoryRouter(siteID string, sUrl string) (map[string]interface{}, error) {
 		siteID = "dzicnlib"
 	}
 
-	// 初始化路由器(线程安全)
+	// Initialize routers (thread-safe)
 	doInit.Do(func() {
-		//[中国]国家图书馆
+		//[China] National Library of China
 		Router["read.nlc.cn"] = app.NewChinaNlc()
 		Router["mylib.nlc.cn"] = app.NewChinaNlc()
 		Router["guji.nlc.cn"] = app.NewNlcGuji()
 
-		//[中国]臺灣華文電子書庫
+		//[China] Taiwan Chinese E-book Repository
 		Router["taiwanebook.ncl.edu.tw"] = app.NewHuawen()
 
-		//[中国]香港中文大学图书馆
+		//[China] Chinese University of Hong Kong Library
 		Router["repository.lib.cuhk.edu.hk"] = app.NewCuhk()
 
-		//[中国]香港科技大学图书馆
+		//[China] Hong Kong University of Science and Technology Library
 		Router["lbezone.hkust.edu.hk"] = app.NewUsthk()
 
-		//[中国]洛阳市图书馆
+		//[China] Luoyang City Library
 		Router["111.7.82.29:8090"] = app.NewLuoyang()
 
-		//[中国]温州市图书馆
+		//[China] Wenzhou City Library
 		Router["oyjy.wzlib.cn"] = app.NewWzlib()
 		Router["arcgxhpv7cw0.db.wzlib.cn"] = app.NewWzlib()
 
-		//[中国]深圳市图书馆-古籍
+		//[China] Shenzhen Library - Ancient Books
 		Router["yun.szlib.org.cn"] = app.NewSzLib()
 
-		//[中国]广州大典
+		//[China] Guangzhou Dadian
 		Router["gzdd.gzlib.gov.cn"] = app.NewGzlib()
 		Router["gzdd.gzlib.org.cn"] = app.NewGzlib()
 
-		//[中国]天一阁博物院古籍数字化平台
+		//[China] Tianyi Pavilion Museum Ancient Books Digitization Platform
 		Router["gj.tianyige.com.cn"] = app.NewTianyige()
 
-		//[中国]江苏高校珍贵古籍数字图书馆
+		//[China] Jiangsu Colleges Precious Ancient Books Digital Library
 		Router["jsgxgj.nju.edu.cn"] = app.NewNjuedu()
 
-		//[中国]中华寻根网-国图
+		//[China] China Roots Network - National Library
 		Router["ouroots.nlc.cn"] = app.NewOuroots()
 
-		//[中国]国家哲学社会科学文献中心
+		//[China] National Center for Philosophy and Social Sciences Documentation
 		Router["www.ncpssd.org"] = app.NewNcpssd()
 		Router["www.ncpssd.cn"] = app.NewNcpssd()
 
-		//[中国]山东中医药大学古籍数字图书馆
+		//[China] Shandong University of Traditional Chinese Medicine Digital Ancient Books Library
 		Router["gjsztsg.sdutcm.edu.cn"] = app.NewSdutcm()
-		//[中国]山东省古籍数字资源平台
+		//[China] Shandong Province Ancient Books Digital Resource Platform
 		Router["guji.sdlib.com"] = app.NewSdlib()
 
-		//[中国]天津图书馆历史文献数字资源库
+		//[China] Tianjin Library Historical Literature Digital Resource Database
 		Router["lswx.tjl.tj.cn:8001"] = app.NewTjlswx()
 
-		//[中国]云南数字方志馆
+		//[China] Yunnan Digital Local Gazetteer
 		Router["dfz.yn.gov.cn"] = app.NewYndfz()
 
-		//[中国]香港大学数字图书
+		//[China] University of Hong Kong Digital Library
 		Router["digitalrepository.lib.hku.hk"] = app.NewHkulib()
 
-		//[中国]山东省诸城市图书馆
+		//[China] Zhucheng City Library, Shandong Province
 		Router["124.134.220.209:8100"] = app.NewZhuCheng()
-		//[中国]中央美术学院
+		//[China] Central Academy of Fine Arts
 		Router["dlibgate.cafa.edu.cn"] = app.NewCafaEdu()
 		Router["dlib.cafa.edu.cn"] = app.NewCafaEdu()
 
-		//抗日战争与中日关系文献数据平台
+		//[China] Anti-Japanese War and Sino-Japanese Relations Literature Database Platform
 		Router["www.modernhistory.org.cn"] = app.NewWar1931()
 		//}}} -----------------------------------------------------------------
 
-		//---------------日本--------------------------------------------------
-		//[日本]国立国会图书馆
+		//---------------Japan--------------------------------------------------
+		//[Japan] National Diet Library
 		Router["dl.ndl.go.jp"] = app.NewNdlJP()
 
-		//[日本]E国宝eMuseum
+		//[Japan] e-Museum National Treasures
 		Router["emuseum.nich.go.jp"] = app.NewEmuseum()
 
-		//[日本]宫内厅书陵部（汉籍集览）
+		//[Japan] Imperial Household Agency Archives and Mausolea Department (Chinese Books Collection)
 		Router["db2.sido.keio.ac.jp"] = app.NewKeio()
 
-		//[日本]东京大学东洋文化研究所（汉籍善本资料库）
+		//[Japan] University of Tokyo Institute for Oriental Culture (Chinese Rare Books Database)
 		Router["shanben.ioc.u-tokyo.ac.jp"] = app.NewUtokyo()
 
-		//[日本]国立公文书馆（内阁文库）
+		//[Japan] National Archives of Japan (Cabinet Library)
 		Router["www.digital.archives.go.jp"] = app.NewNationaljp()
 
-		//[日本]东洋文库
+		//[Japan] Toyo Bunko (Oriental Library)
 		Router["dsr.nii.ac.jp"] = app.NewNiiac()
 
-		//[日本]早稻田大学图书馆
+		//[Japan] Waseda University Library
 		Router["archive.wul.waseda.ac.jp"] = app.NewWaseda()
 
-		//[日本]国書数据库（古典籍）
+		//[Japan] Kokusho Database (Classical Books)
 		Router["kokusho.nijl.ac.jp"] = app.NewKokusho()
 
-		//[日本]京都大学人文科学研究所 东方学数字图书博物馆
+		//[Japan] Kyoto University Institute for Research in Humanities - Digital Library Museum of Oriental Studies
 		Router["kanji.zinbun.kyoto-u.ac.jp"] = app.NewKyotou()
 
-		//[日本]駒澤大学 电子贵重书库
+		//[Japan] Komazawa University Electronic Rare Books Collection
 		Router["repo.komazawa-u.ac.jp"] = app.NewIiifRouter()
 
-		//[日本]关西大学图书馆
+		//[Japan] Kansai University Library
 		Router["www.iiif.ku-orcas.kansai-u.ac.jp"] = app.NewIiifRouter()
 
-		//[日本]庆应义塾大学图书馆
+		//[Japan] Keio University Library
 		Router["dcollections.lib.keio.ac.jp"] = app.NewIiifRouter()
 
-		//[日本]国立历史民俗博物馆
+		//[Japan] National Museum of Japanese History
 		Router["khirin-a.rekihaku.ac.jp"] = app.NewKhirin()
 
-		//[日本]市立米泽图书馆
+		//[Japan] Yonezawa City Library
 		Router["www.library.yonezawa.yamagata.jp"] = app.NewYonezawa()
 		Router["webarchives.tnm.jp"] = app.NewTnm()
 
-		//[日本]龙谷大学
+		//[Japan] Ryukoku University
 		Router["da.library.ryukoku.ac.jp"] = app.NewRyukoku()
 		//}}} -----------------------------------------------------------------
 
-		//{{{---------------美国、欧洲--------------------------------------------------
-		//[美国]哈佛大学图书馆
+		//{{{---------------United States, Europe--------------------------------------------------
+		//[United States] Harvard University Library
 		Router["iiif.lib.harvard.edu"] = app.NewHarvard()
 		Router["listview.lib.harvard.edu"] = app.NewHarvard()
 		Router["curiosity.lib.harvard.edu"] = app.NewHarvard()
 
-		//[美国]hathitrust 数字图书馆
+		//[United States] HathiTrust Digital Library
 		Router["babel.hathitrust.org"] = app.NewHathitrust()
 
-		//[美国]普林斯顿大学图书馆
+		//[United States] Princeton University Library
 		Router["catalog.princeton.edu"] = app.NewPrinceton()
 		Router["dpul.princeton.edu"] = app.NewPrinceton()
 
-		//[美国]国会图书馆
+		//[United States] Library of Congress
 		Router["www.loc.gov"] = app.NewLoc()
 
-		//[美国]斯坦福大学图书馆
+		//[United States] Stanford University Library
 
-		//[美国]犹他州家谱
+		//[United States] Utah Genealogy (FamilySearch)
 		Router["www.familysearch.org"] = app.NewFamilysearch()
 
-		//[德国]柏林国立图书馆
+		//[Germany] Berlin State Library
 		Router["digital.staatsbibliothek-berlin.de"] = app.NewBerlin()
 
-		//[德国]巴伐利亞州立圖書館東亞數字資源庫
+		//[Germany] Bavarian State Library East Asian Digital Collections
 		Router["ostasien.digitale-sammlungen.de"] = app.NewSammlungen()
 		Router["www.digitale-sammlungen.de"] = app.NewSammlungen()
 
-		//[英国]牛津大学博德利图书馆
+		//[United Kingdom] Oxford University Bodleian Library
 		Router["digital.bodleian.ox.ac.uk"] = app.NewOxacuk()
 
-		//[英国]图书馆文本手稿
+		//[United Kingdom] British Library Manuscripts
 		Router["www.bl.uk"] = app.NewBluk()
 
 		//Smithsonian Institution
@@ -187,15 +187,15 @@ func FactoryRouter(siteID string, sUrl string) (map[string]interface{}, error) {
 		Router["iiif.si.edu"] = app.NewSiEdu()
 		Router["asia.si.edu"] = app.NewSiEdu()
 
-		//[美國]柏克萊加州大學東亞圖書館
+		//[United States] UC Berkeley East Asian Library
 		Router["digicoll.lib.berkeley.edu"] = app.NewBerkeley()
 
-		//奥地利国图
+		//[Austria] Austrian National Library
 		Router["digital.onb.ac.at"] = app.NewOnbDigital()
 		//}}} -----------------------------------------------------------------
 
-		//{{{---------------其它--------------------------------------------------
-		//國際敦煌項目
+		//{{{---------------Others--------------------------------------------------
+		//International Dunhuang Project
 		Router["idp.nlc.cn"] = app.NewIdp()
 		Router["idp.bl.uk"] = app.NewIdp()
 		Router["idp.orientalstudies.ru"] = app.NewIdp()
@@ -204,20 +204,20 @@ func FactoryRouter(siteID string, sUrl string) (map[string]interface{}, error) {
 		Router["idp.bnf.fr"] = app.NewIdp()
 		Router["idp.korea.ac.kr"] = app.NewIdp()
 
-		//[韩国]
+		//[Korea]
 		Router["kyudb.snu.ac.kr"] = app.NewKyudbSnu()
 		Router["lod.nl.go.kr"] = app.NewLodNLGoKr()
 
-		//高丽大学
+		//[Korea] Korea University
 		Router["kostma.korea.ac.kr"] = app.NewKorea()
 
-		//俄罗斯图书馆
+		//[Russia] Russian State Library
 		Router["viewer.rsl.ru"] = app.NewRslRu()
 
-		//越南汉喃古籍文献典藏数位计划
+		//[Vietnam] Vietnamese Han-Nom Ancient Books Digital Preservation Project
 		Router["lib.nomfoundation.org"] = app.NewNomfoundation()
 
-		//越南国家图书馆汉农图书馆
+		//[Vietnam] National Library of Vietnam Han-Nom Library
 		Router["hannom.nlv.gov.vn"] = app.NewHannomNlv()
 		//}}} -----------------------------------------------------------------
 
@@ -226,7 +226,7 @@ func FactoryRouter(siteID string, sUrl string) (map[string]interface{}, error) {
 		Router["iiif.io"] = app.NewIiifRouter()
 	})
 
-	// 检查路由器是否存在
+	// Check if router exists
 	if _, ok := Router[siteID]; !ok {
 		urlType := util.GetHeaderContentType(sUrl)
 		if urlType == "json" {

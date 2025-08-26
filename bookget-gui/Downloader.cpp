@@ -7,7 +7,7 @@
 
 void Downloader::Start(HWND hWnd) {
     m_downloaderThread = std::thread([this, hWnd]() {
-        //睡眠 3 秒，等第一个tab页 Init 成功
+        // Sleep for 3 seconds, wait for first tab to initialize successfully
         std::this_thread::sleep_for(std::chrono::seconds(3));
         {
             std::lock_guard<std::mutex> lock(m_downloadCounterMutex);
@@ -19,7 +19,7 @@ void Downloader::Start(HWND hWnd) {
             m_sleepTime = conf.GetSleepTime();
             m_maxDownloads = conf.GetMaxDownloads();
 
-            // 加载URL列表
+            // Load URL list
             if(m_downloaderMode == 0) {
                 std::wstring sUrlsFilePath = Util::GetCurrentExeDirectory() + L"\\urls.txt";
                 LoadImageUrlsFromFile(sUrlsFilePath);
@@ -30,16 +30,16 @@ void Downloader::Start(HWND hWnd) {
 
         if (!m_targetUrls.empty())
         {
-            //开始下载
+            // Start downloading
             DownloadNextImage(hWnd);
         }
 
-        m_workerThreadId = GetCurrentThreadId(); // 保存线程 ID
+        m_workerThreadId = GetCurrentThreadId(); // Save thread ID
             
-        // 消息循环（必需用于接收 PostThreadMessage）
+        // Message loop (required for receiving PostThreadMessage)
          while (!m_stopThread.load(std::memory_order_relaxed)) {
             MSG msg;
-            // 设置100ms超时，避免长期阻塞
+            // Set 100ms timeout, avoid long-term blocking
             if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
                 if (msg.message == WM_DOWNLOAD_URL) {
                     std::wstring* pUrl = reinterpret_cast<std::wstring*>(msg.lParam);
@@ -64,19 +64,19 @@ void Downloader::Stop() {
 }
 
 void Downloader::RequestDownload(const std::wstring& url) {
-    // 深拷贝数据并发送到工作线程
+    // Deep copy data and send to worker thread
     std::wstring* pUrl = new std::wstring(url);
     ::PostThreadMessage(m_workerThreadId, WM_DOWNLOAD_URL, 0, reinterpret_cast<LPARAM>(pUrl));
 
 }
 bool Downloader::ShouldInterceptRequest(const std::wstring& sUrl){
     
-    // 跳过本地路径（file://, http://localhost, 127.0.0.1等）
+    // Skip local paths (file://, http://localhost, 127.0.0.1, etc.)
     if (Util::IsLocalUri(sUrl)) {
-        return false; // 不处理本地URI
+        return false; // Do not handle local URIs
     }
 
-    // 1. 检查URL是否匹配目标URL列表
+    // 1. Check if URL matches target URL list
     bool urlMatch = false;
     for (const auto& targetUrl : m_targetUrls)
     {
@@ -86,18 +86,18 @@ bool Downloader::ShouldInterceptRequest(const std::wstring& sUrl){
             break;
         }
     }
-    // 2. 检查URL是否匹配 config.yaml URL
+    // 2. Check if URL matches config.yaml URL
     auto& conf = Config::GetInstance();
     std::string narrow_url = Util::WideToUtf8(sUrl);
     for (const auto& site : conf.GetSiteConfigs()) {
-        //http请求前的URL
+        // URL before HTTP request
         if (site.intercept == 0 && Util::matchUrlPattern(site.url, narrow_url) ) {
              urlMatch = true;
             break;
         }
     }
 
-    // 3. 检查URL扩展名
+    // 3. Check URL extension
     //for (const auto& ext : m_targetExtensions) {
     //    if (sUrl.size() >= ext.size() && 
     //        _wcsicmp(sUrl.substr(sUrl.size() - ext.size()).c_str(), ext.c_str()) == 0) {
@@ -111,12 +111,12 @@ bool Downloader::ShouldInterceptRequest(const std::wstring& sUrl){
 
 bool Downloader::ShouldInterceptResponse(const std::wstring& sUrl)
 {
-    // 跳过本地路径（file://, http://localhost, 127.0.0.1等）
+    // Skip local paths (file://, http://localhost, 127.0.0.1, etc.)
     if (Util::IsLocalUri(sUrl)) {
-        return false; // 不处理本地URI
+        return false; // Do not handle local URIs
     }
 
-    // 1. 检查URL是否匹配目标URL列表
+    // 1. Check if URL matches target URL list
     bool urlMatch = false;
     for (const auto& targetUrl : m_targetUrls)
     {
@@ -126,11 +126,11 @@ bool Downloader::ShouldInterceptResponse(const std::wstring& sUrl)
             break;
         }
     }
-    // 2. 检查URL是否匹配 config.yaml URL
+    // 2. Check if URL matches config.yaml URL
     auto& conf = Config::GetInstance();
     std::string narrow_url = Util::WideToUtf8(sUrl);
     for (const auto& site : conf.GetSiteConfigs()) {
-        //http请求后的URL
+        // URL after HTTP request
         if (site.intercept == 1 && Util::matchUrlPattern(site.url, narrow_url) ) {
              urlMatch = true;
             break;
@@ -143,7 +143,7 @@ bool Downloader::ShouldInterceptResponse(const std::wstring& sUrl)
 bool Downloader::ShouldInterceptContentType(const std::wstring& contentType, const std::wstring& contentLength)
 {
     bool isCanDownload = false;
-    //  检查Content-Type
+    // Check Content-Type
     if(!contentType.empty()) {
         for (const auto& ext : m_targetContentTypes) {
             if (contentType.size() >= ext.size() && 
@@ -154,11 +154,11 @@ bool Downloader::ShouldInterceptContentType(const std::wstring& contentType, con
         }
     }
 
-    // 检查Content-Length
+    // Check Content-Length
     if(!contentLength.empty()) {
         ULONGLONG length = 0;
         if (swscanf_s(contentLength.c_str(), L"%llu", &length) == 1) {
-            // 设置合理的图片大小范围 (10KB - 20MB)
+            // Set reasonable image size range (10KB - 20MB)
             isCanDownload = (length >= 10240 && length <= 20 * 1024 * 1024);
         }
     }
@@ -172,7 +172,7 @@ std::wstring Downloader::GetFilePath(const std::wstring& sUrl)
     std::wstring filePath;
 
     bool isSharedDataURL = false;
-    //读共享内存
+    // Read shared memory
     auto* sharedData = SharedMemory::GetInstance().GetMutex();
     if (sharedData != nullptr) {
         isSharedDataURL = sharedData->ImageReady && sharedData->ImagePath && sharedData->PID != GetCurrentProcessId();
@@ -183,12 +183,12 @@ std::wstring Downloader::GetFilePath(const std::wstring& sUrl)
      }
 
     if (m_downloaderMode == 0 || m_downloaderMode == 1) {
-         // 获取下一个序号
+         // Get next sequence number
         std::lock_guard<std::mutex> lock(m_downloadCounterMutex);
         int currentCount = ++m_downloadCounter;
  
 
-        //默认扩展名
+        // Default extension
         auto& conf = Config::GetInstance();
         std::wstring ext = Util::Utf8ToWide(conf.GetDefaultExt());
         bool useDefaultExt = false;
@@ -206,7 +206,7 @@ std::wstring Downloader::GetFilePath(const std::wstring& sUrl)
             << std::setw(4) << std::setfill(L'0') << currentCount;
 
         if(!useDefaultExt) {
-            // 尝试从URL获取文件扩展名
+            // Try to get file extension from URL
             size_t dotPos = sUrl.find_last_of(L'.');
             if (dotPos != std::wstring::npos)
             {
@@ -228,14 +228,14 @@ std::wstring Downloader::GetFilePath(const std::wstring& sUrl)
  
     if (m_downloadCounter >=  m_maxDownloads)
     {
-        OutputDebugString(L"超出 config.yaml 设置的限制 max_downloads 次数\n");
+        OutputDebugString(L"Exceeded max_downloads limit set in config.yaml\n");
         return L"";
     }
     return filePath;
 }
 
 
-// 2. 从文件加载URLs
+// 2. Load URLs from file
 void Downloader::LoadImageUrlsFromFile(const std::wstring& sUrlsFilePath)
 {
     std::wifstream file;
@@ -262,7 +262,7 @@ void Downloader::LoadImageUrlsFromFile(const std::wstring& sUrlsFilePath)
     }
 }
 
-//3. 下载下一页
+// 3. Download next page
 void Downloader::DownloadNextImage(HWND hWnd)
 {
     int currentIndex = m_downloadCounter;
@@ -280,7 +280,7 @@ void Downloader::DownloadNextImage(HWND hWnd)
             hWnd,
             WM_DOWNLOAD_URL,
             0,
-            reinterpret_cast<LPARAM>(pUrl.release()) // 移交所有权
+            reinterpret_cast<LPARAM>(pUrl.release()) // Transfer ownership
         );
     } catch (const std::out_of_range&) {
         //::PostMessage(m_hWnd, WM_ERR, 0, (LPARAM)L"Index out of range");

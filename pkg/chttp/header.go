@@ -38,7 +38,7 @@ func ReadHttpHeadersFromFile(filename string) (http.Header, error) {
 	return headers, nil
 }
 
-// 从文件读取HTTP头信息
+// Read HTTP header information from file
 func ReadHeadersFromFile(filename string) (map[string]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {

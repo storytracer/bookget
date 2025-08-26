@@ -20,27 +20,27 @@ var (
 	wg             sync.WaitGroup
 	versionChecker = version.NewChecker(
 		config.Version,
-		"deweizhu", // GitHub仓库所有者
-		"bookget",  // GitHub仓库名称
+		"deweizhu", // GitHub repository owner
+		"bookget",  // GitHub repository name
 	)
 )
 
 func main() {
 	ctx := context.Background()
 
-	// 初始化配置
+	// Initialize configuration
 	if !initializeConfig(ctx) {
 		return
 	}
 
-	// 检查更新
+	// Check for updates
 	checkForUpdates()
 
-	// 根据运行模式执行相应操作
+	// Execute based on run mode
 	executeByRunMode(ctx)
 }
 
-// initializeConfig 处理配置初始化
+// initializeConfig handles configuration initialization
 func initializeConfig(ctx context.Context) bool {
 	if !config.Init(ctx) {
 		return false
@@ -48,7 +48,7 @@ func initializeConfig(ctx context.Context) bool {
 	return true
 }
 
-// executeByRunMode 根据运行模式执行相应操作
+// executeByRunMode executes based on the run mode
 func executeByRunMode(ctx context.Context) {
 	switch determineRunMode() {
 	case RunModeSingleURL:
@@ -73,7 +73,7 @@ const (
 	RunModeInteractiveImage
 )
 
-// determineRunMode 确定运行模式
+// determineRunMode determines the run mode
 func determineRunMode() RunMode {
 	if config.Conf.DownloaderMode == 1 {
 		return RunModeInteractiveImage
@@ -87,20 +87,20 @@ func determineRunMode() RunMode {
 	return RunModeInteractive
 }
 
-// hasValidURLsFile 检查是否有有效的URLs文件
+// hasValidURLsFile checks if there is a valid URLs file
 func hasValidURLsFile() bool {
 	f, err := os.Stat(config.Conf.UrlsFile)
 	return err == nil && f.Size() > 0
 }
 
-// executeSingleURL 处理单个URL模式
+// executeSingleURL handles single URL mode
 func executeSingleURL(ctx context.Context, rawUrl string) {
 	if err := processURL(ctx, rawUrl); err != nil {
 		log.Println(err)
 	}
 }
 
-// executeBatchURLs 处理批量URLs模式
+// executeBatchURLs handles batch URLs mode
 func executeBatchURLs() {
 	allUrls, err := loadAndFilterURLs(config.Conf.UrlsFile)
 	if err != nil {
@@ -117,7 +117,7 @@ func executeBatchURLs() {
 	wg.Wait()
 }
 
-// runInteractiveMode 运行交互模式
+// runInteractiveMode runs interactive mode
 func runInteractiveMode(ctx context.Context) {
 	//cleanupCookieFile()
 	for {
@@ -132,17 +132,17 @@ func runInteractiveMode(ctx context.Context) {
 	}
 }
 
-// runInteractiveModeImage 运行交互模式：图片下载
+// runInteractiveModeImage runs interactive mode: image download
 func runInteractiveModeImage(ctx context.Context) {
 	//cleanupCookieFile()
 	app.NewImageDownloader().Run("")
 }
 
-// loadAndFilterURLs 加载并过滤URLs
+// loadAndFilterURLs loads and filters URLs
 func loadAndFilterURLs(filename string) ([]string, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("无法读取URL文件: %w", err)
+		return nil, fmt.Errorf("unable to read URL file: %w", err)
 	}
 
 	lines := strings.Split(string(content), "\n")
@@ -155,22 +155,22 @@ func loadAndFilterURLs(filename string) ([]string, error) {
 	}
 
 	if len(urls) == 0 {
-		return nil, fmt.Errorf("URL文件中没有有效的URL")
+		return nil, fmt.Errorf("no valid URLs found in URL file")
 	}
 
 	return urls, nil
 }
 
-// isValidURL 验证URL是否有效
+// isValidURL validates if URL is valid
 func isValidURL(url string) bool {
 	return url != "" && strings.HasPrefix(url, "http")
 }
 
-// processURLsDownloaderMode 自动检测模式处理URLs
+// processURLsDownloaderMode handles URLs in auto-detection mode
 func processURLsDownloaderMode(q *queue.ConcurrentQueue, allUrls []string) {
 	for _, v := range allUrls {
 		wg.Add(1)
-		rawURL := v // 创建局部变量供闭包使用
+		rawURL := v // Create local variable for closure use
 		q.Go(func() {
 			defer wg.Done()
 			processURLSet("bookget", rawURL)
@@ -178,17 +178,17 @@ func processURLsDownloaderMode(q *queue.ConcurrentQueue, allUrls []string) {
 	}
 }
 
-// processURLsManual 手动模式处理URLs
+// processURLsManual handles URLs in manual mode
 func processURLsManual(q *queue.ConcurrentQueue, allUrls []string) {
 	for _, v := range allUrls {
 		u, err := url.Parse(v)
 		if err != nil {
-			log.Printf("URL解析失败: %s, 错误: %v\n", v, err)
+			log.Printf("URL parsing failed: %s, error: %v\n", v, err)
 			continue
 		}
 
 		wg.Add(1)
-		rawURL := v // 创建局部变量供闭包使用
+		rawURL := v // Create local variable for closure use
 		q.Go(func() {
 			defer wg.Done()
 			processURLSet(u.Host, rawURL)
@@ -196,18 +196,18 @@ func processURLsManual(q *queue.ConcurrentQueue, allUrls []string) {
 	}
 }
 
-// processURLSet 处理一组URLs
+// processURLSet processes a group of URLs
 func processURLSet(siteID string, rawUrl string) {
 	result, err := router.FactoryRouter(siteID, rawUrl)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	// 使用result
+	// Use result
 	_ = result
 }
 
-// readURLFromInput 从用户输入读取URL
+// readURLFromInput reads URL from user input
 func readURLFromInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println()
@@ -215,21 +215,21 @@ func readURLFromInput() (string, error) {
 	fmt.Print("-> ")
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		return "", fmt.Errorf("读取输入失败: %w", err)
+		return "", fmt.Errorf("failed to read input: %w", err)
 	}
 	return strings.TrimSpace(input), nil
 }
 
-// processURL 处理单个URL
+// processURL processes a single URL
 func processURL(ctx context.Context, rawUrl string) error {
 	rawURL := strings.TrimSpace(rawUrl)
 	if !isValidURL(rawURL) {
-		return fmt.Errorf("无效的URL: %s", rawUrl)
+		return fmt.Errorf("invalid URL: %s", rawUrl)
 	}
 
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return fmt.Errorf("URL解析失败: %w", err)
+		return fmt.Errorf("URL parsing failed: %w", err)
 	}
 
 	result, err := router.FactoryRouter(u.Host, rawURL)
@@ -237,33 +237,33 @@ func processURL(ctx context.Context, rawUrl string) error {
 		log.Println(err)
 		return err
 	}
-	// 使用result
+	// Use result
 	_ = result
 
 	return nil
 }
 
-// cleanupCookieFile 清理cookie文件
+// cleanupCookieFile cleans up cookie file
 func cleanupCookieFile() {
 	if err := os.Remove(config.Conf.CookieFile); err != nil && !os.IsNotExist(err) {
-		log.Printf("清理cookie文件失败: %v\n", err)
+		log.Printf("Failed to clean up cookie file: %v\n", err)
 	}
 }
 
-// checkForUpdates 检查版本更新
+// checkForUpdates checks for version updates
 func checkForUpdates() {
-	//刪除舊版多餘目錄 （迭代幾個版本號，可移除此行）
+	// Delete old redundant directories (iterate through a few version numbers, this line can be removed)
 	_ = os.RemoveAll(config.BookgetHomeDir())
 	latestVersion, updateAvailable, err := versionChecker.CheckForUpdate()
 	if err != nil {
-		log.Printf("版本检查失败: %v\n", err)
+		log.Printf("Version check failed: %v\n", err)
 		return
 	}
 
 	if updateAvailable {
-		fmt.Printf("\n新版本可用: %s (当前版本: %s)\n", latestVersion, versionChecker.CurrentVersion)
-		fmt.Printf("请访问 https://github.com/deweizhu/bookget/releases/latest 升级。\n\n")
+		fmt.Printf("\nNew version available: %s (current version: %s)\n", latestVersion, versionChecker.CurrentVersion)
+		fmt.Printf("Please visit https://github.com/deweizhu/bookget/releases/latest to upgrade.\n\n")
 	} else if latestVersion != "" {
-		fmt.Printf("当前已是最新版本: %s\n", versionChecker.CurrentVersion)
+		fmt.Printf("Current version is already the latest: %s\n", versionChecker.CurrentVersion)
 	}
 }

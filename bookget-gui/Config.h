@@ -6,17 +6,17 @@
 class Config
 {
 public:
-    // 删除拷贝构造函数和赋值运算符
+    // Delete copy constructor and assignment operator
     Config(const Config&) = delete;
     Config& operator=(const Config&) = delete;
     
-    // 获取单例实例
+    // Get singleton instance
     static Config& GetInstance() {
         static Config instance;
         return instance;
     }
 
-    // 配置管理
+    // Configuration management
     struct SiteConfig {
         std::string url;
         std::string script;
@@ -26,7 +26,7 @@ public:
         int downloaderMode;
     };
 
-    // 公共接口
+    // Public interface
     bool Load(const std::string& configPath);
     std::string GetDownloadDir();
     std::string GetDefaultExt();
@@ -38,22 +38,22 @@ public:
 private:
     // PIMPL 实现
     struct ConfigImpl {
-        // 全局设置
+        // Global settings
         std::string downloadDir = "downloads";
         int maxDownloads = 1000;
         int sleepTime = 3;
-        int downloaderMode = 1;    //下载模式 0=urls.txt | 1=自动监听图片 | 2 = 共享内存URL
+        int downloaderMode = 1;    // Download mode 0=urls.txt | 1=auto listen images | 2=shared memory URL
         std::string fileExt = ".jpg";
      
         std::vector<SiteConfig> siteConfigs;
 
-        // 加载 YAML 配置文件
+        // Load YAML configuration file
         bool Load(const std::string& configPath);
     };
 
-    Config();  // 私有构造函数
+    Config();  // Private constructor
     ~Config() = default;
     
-    // PIMPL实现
+    // PIMPL implementation
     std::unique_ptr<ConfigImpl> pImpl;
 };

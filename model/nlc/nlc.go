@@ -1,13 +1,13 @@
 package nlc
 
-// 基础响应结构
+// Base response structure
 type BaseResponse struct {
 	Msg  string `json:"msg"`
 	Code int    `json:"code"`
 	Data Node   `json:"data"`
 }
 
-// 数据项结构
+// Data item structure
 type DataItem struct {
 	OrderSeq    string `json:"orderSeq"`
 	ImageId     string `json:"imageId"`
@@ -15,7 +15,7 @@ type DataItem struct {
 	PageNum     int    `json:"pageNum"`
 }
 
-// 通用节点结构（用于多级嵌套）
+// Generic node structure (for multi-level nesting)
 type Node struct {
 	ImageIdList []DataItem `json:"imageIdList"`
 	Total       int        `json:"total"`
@@ -35,7 +35,7 @@ type ImageData struct {
 	} `json:"data"`
 }
 
-// 目录
+// Directory
 type StructureResponse struct {
 	Code int      `json:"code"`
 	Data []Volume `json:"data"`

@@ -9,7 +9,7 @@
 class Tab
 {
 public:
-       // WebView资源
+       // WebView resources
     wil::com_ptr<ICoreWebView2Environment> m_contentEnv;
 
     wil::com_ptr<ICoreWebView2Controller> m_contentController;

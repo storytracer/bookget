@@ -1,6 +1,6 @@
 #include "BrowserWindow.h"
 
-// UI WebViews初始化
+// UI WebViews initialization
 HRESULT BrowserWindow::InitUIWebViews()
 {
     // Get data directory for browser UI data
@@ -23,7 +23,7 @@ HRESULT BrowserWindow::InitUIWebViews()
     }).Get());
 }
 
-// 控制WebView创建实现
+// Control WebView creation implementation
 HRESULT BrowserWindow::CreateBrowserControlsWebView()
 {
     return m_uiEnv->CreateCoreWebView2Controller(m_hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
@@ -42,22 +42,22 @@ HRESULT BrowserWindow::CreateBrowserControlsWebView()
         RETURN_IF_FAILED(m_controlsWebView->get_Settings(&settings));
         RETURN_IF_FAILED(settings->put_AreDevToolsEnabled(FALSE));
 
-        // 禁用弹窗
+        // Disable popups
         RETURN_IF_FAILED(settings->put_AreDefaultScriptDialogsEnabled(FALSE));
 
-        // 设置新窗口在当前标签页打开
+        // Set new windows to open in current tab
         RETURN_IF_FAILED(m_controlsWebView->add_NewWindowRequested(
             Callback<ICoreWebView2NewWindowRequestedEventHandler>(
                 [this](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT
         {
-            // 获取请求的URI
+            // Get the requested URI
             wil::unique_cotaskmem_string uri;
             args->get_Uri(&uri);
             
-            // 在当前WebView中导航到该URI
+            // Navigate to that URI in current WebView
             m_controlsWebView->Navigate(uri.get());
 
-            // 取消默认的新窗口行为
+            // Cancel default new window behavior
             args->put_Handled(TRUE);
       
             
@@ -78,14 +78,14 @@ HRESULT BrowserWindow::CreateBrowserControlsWebView()
         std::wstring controlsPath = GetFullPathFor(L"gui\\controls_ui\\default.html");
         RETURN_IF_FAILED(m_controlsWebView->Navigate(controlsPath.c_str()));
 
-        //AJAX 注册 AJAX 请求拦截器
+        // AJAX register AJAX request interceptor
         //SetupDownloadHandler(m_controlsWebView);
     
         return S_OK;
     }).Get());
 }
 
-// 选项卡 WebView创建实现.
+// Options tab WebView creation implementation
 HRESULT BrowserWindow::CreateBrowserOptionsWebView()
 {
     return m_uiEnv->CreateCoreWebView2Controller(m_hWnd, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>(
@@ -104,22 +104,22 @@ HRESULT BrowserWindow::CreateBrowserOptionsWebView()
         RETURN_IF_FAILED(m_optionsWebView->get_Settings(&settings));
         RETURN_IF_FAILED(settings->put_AreDevToolsEnabled(FALSE));
 
-         // 禁用弹窗
+         // Disable popups
         RETURN_IF_FAILED(settings->put_AreDefaultScriptDialogsEnabled(FALSE));
         
-        // 设置新窗口在当前标签页打开
+        // Set new windows to open in current tab
         RETURN_IF_FAILED(m_optionsWebView->add_NewWindowRequested(
             Callback<ICoreWebView2NewWindowRequestedEventHandler>(
                 [this](ICoreWebView2* sender, ICoreWebView2NewWindowRequestedEventArgs* args) -> HRESULT
         {
-            // 获取请求的URI
+            // Get the requested URI
             wil::unique_cotaskmem_string uri;
             args->get_Uri(&uri);
 
-           // 在当前WebView中导航到该URI
+           // Navigate to that URI in current WebView
             m_controlsWebView->Navigate(uri.get());
 
-            // 取消默认的新窗口行为
+            // Cancel default new window behavior
             args->put_Handled(TRUE);
             
             return S_OK;
@@ -170,7 +170,7 @@ HRESULT BrowserWindow::OpenWindowTab(wchar_t *webUrl, bool isTab)
          m_tabs.at(m_activeTabId)->m_contentWebView->Navigate(g_HomeUrl.c_str());
          return S_OK;
     }
-    // 创建新标签页
+    // Create new tab
     web::json::value jsonObj = web::json::value::parse(L"{}");
     jsonObj[L"message"] = web::json::value(MG_CREATE_TAB);
     jsonObj[L"args"] = web::json::value::parse(L"{}");
@@ -178,17 +178,17 @@ HRESULT BrowserWindow::OpenWindowTab(wchar_t *webUrl, bool isTab)
     jsonObj[L"args"][L"active"] = web::json::value::boolean(true);
     jsonObj[L"args"][L"uri"] = web::json::value(webUrl);
     
-    // 发送消息创建新标签页并导航
+    // Send message to create new tab and navigate
     PostJsonToWebView(jsonObj, m_controlsWebView.get());
 
     return S_OK;
 }
 
 
-// 切换标签页
+// Switch tab
 HRESULT BrowserWindow::SwitchToTab(size_t tabId)
 {
-    // 检查标签页是否存在
+    // Check if tab exists
     if (m_tabs.find(tabId) == m_tabs.end())
     {
         return E_INVALIDARG;
@@ -196,12 +196,12 @@ HRESULT BrowserWindow::SwitchToTab(size_t tabId)
 
     size_t previousActiveTab = m_activeTabId;
 
-    // 激活新标签页
+    // Activate new tab
     RETURN_IF_FAILED(m_tabs.at(tabId)->ResizeWebView());
     RETURN_IF_FAILED(m_tabs.at(tabId)->m_contentController->put_IsVisible(TRUE));
     m_activeTabId = tabId;
 
-    // 隐藏之前的活动标签页
+    // Hide previous active tab
     if (previousActiveTab != INVALID_TAB_ID && previousActiveTab != m_activeTabId) 
     {
         auto previousTabIterator = m_tabs.find(previousActiveTab);
@@ -216,7 +216,7 @@ HRESULT BrowserWindow::SwitchToTab(size_t tabId)
 }
 
 
-// 标签页URI更新处理
+// Tab URI update handling
 HRESULT BrowserWindow::HandleTabURIUpdate(size_t tabId, ICoreWebView2* webview)
 {
     wil::unique_cotaskmem_string source;
@@ -249,7 +249,7 @@ HRESULT BrowserWindow::HandleTabURIUpdate(size_t tabId, ICoreWebView2* webview)
     RETURN_IF_FAILED(PostJsonToWebView(jsonObj, m_controlsWebView.get()));
     return S_OK;
 }
- // 标签页历史更新处理实现
+ // Tab history update handling implementation
 HRESULT BrowserWindow::HandleTabHistoryUpdate(size_t tabId, ICoreWebView2* webview)
 {
     wil::unique_cotaskmem_string source;
@@ -274,7 +274,7 @@ HRESULT BrowserWindow::HandleTabHistoryUpdate(size_t tabId, ICoreWebView2* webvi
     return S_OK;
 }
 
-// 导航URL开始
+// Navigation URL start
 HRESULT BrowserWindow::HandleTabNavStarting(size_t tabId, ICoreWebView2* webview)
 {
     web::json::value jsonObj = web::json::value::parse(L"{}");
@@ -285,7 +285,7 @@ HRESULT BrowserWindow::HandleTabNavStarting(size_t tabId, ICoreWebView2* webview
     return PostJsonToWebView(jsonObj, m_controlsWebView.get());
 }
 
-// 导航页面加载完成
+// Navigation page load completed
 HRESULT BrowserWindow::HandleTabNavCompleted(size_t tabId, ICoreWebView2* webview, ICoreWebView2NavigationCompletedEventArgs* args)
 {
     std::wstring getTitleScript(
@@ -420,7 +420,7 @@ HRESULT BrowserWindow::HandleTabNavCompleted(size_t tabId, ICoreWebView2* webvie
     return PostJsonToWebView(jsonObj, m_controlsWebView.get());
 }
 
-// 安全更新
+// Security update
 HRESULT BrowserWindow::HandleTabSecurityUpdate(size_t tabId, ICoreWebView2* webview, ICoreWebView2DevToolsProtocolEventReceivedEventArgs* args)
 {
     wil::unique_cotaskmem_string jsonArgs;
@@ -436,7 +436,7 @@ HRESULT BrowserWindow::HandleTabSecurityUpdate(size_t tabId, ICoreWebView2* webv
     return PostJsonToWebView(jsonObj, m_controlsWebView.get());
 }
 
-// 创建标签页
+// Create tab
 void BrowserWindow::HandleTabCreated(size_t tabId, bool shouldBeActive)
 {
     if (shouldBeActive)
@@ -444,7 +444,7 @@ void BrowserWindow::HandleTabCreated(size_t tabId, bool shouldBeActive)
         CheckFailure(SwitchToTab(tabId), L"");
     }
 }
-// 标签页消息接收处理
+// Tab message received handling
 HRESULT BrowserWindow::HandleTabMessageReceived(size_t tabId, ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs* eventArgs)
 {
     wil::unique_cotaskmem_string jsonString;
@@ -556,10 +556,10 @@ HRESULT BrowserWindow::HandleTabMessageReceived(size_t tabId, ICoreWebView2* web
 }
 
 
-// Javascript 脚本执行
+// JavaScript script execution
 HRESULT BrowserWindow::ExecuteScriptFile(const std::wstring& scriptPath, ICoreWebView2* webview)
 {
-    // 1. 读取 JS 文件内容
+    // 1. Read JS file content
     std::wstring scriptContent;
     if (!Util::ReadFileToString(scriptPath, scriptContent))
     {
@@ -567,7 +567,7 @@ HRESULT BrowserWindow::ExecuteScriptFile(const std::wstring& scriptPath, ICoreWe
         return E_FAIL;
     }
 
-    // 2. 执行 JS 代码
+    // 2. Execute JS code
     return webview->ExecuteScript(
         scriptContent.c_str(),
         Callback<ICoreWebView2ExecuteScriptCompletedHandler>(
